@@ -59,7 +59,12 @@ class Miner(BaseMinerNeuron):
         the miner's intended operation. This method demonstrates a basic transformation of input data.
         """
         # TODO(developer): Replace with actual implementation logic.
+
+        start_time = time.time()
         synapse.dummy_output = synapse.dummy_input * 2
+        finish_time = time.time() - start_time
+        synapse.dendrite.response_time = finish_time
+        bt.logging.info(f"Processed request in {finish_time} seconds.")
         return synapse
 
     async def blacklist(

@@ -18,6 +18,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import bittensor as bt
+import time
 
 from template.protocol import Dummy
 from template.validator.reward import get_rewards
@@ -34,6 +35,9 @@ async def forward(self):
         self (:obj:`bittensor.neuron.Neuron`): The neuron object which contains all the necessary state for the validator.
 
     """
+    # Log the start time for monitoring purposes.
+    start_time = time.time()
+
     # TODO(developer): Define how the validator selects a miner to query, how often, etc.
     # get_random_uids is an example method, but you can replace it with your own.
     miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
@@ -44,6 +48,7 @@ async def forward(self):
         axons=[self.metagraph.axons[uid] for uid in miner_uids],
         # Construct a dummy query. This simply contains a single integer.
         synapse=Dummy(dummy_input=self.step),
+        response_time = self.dendrite.response_time,
         # All responses have the deserialize function called on them before returning.
         # You are encouraged to define your own deserialization function.
         deserialize=True,
@@ -59,3 +64,6 @@ async def forward(self):
     bt.logging.info(f"Scored responses: {rewards}")
     # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
     self.update_scores(rewards, miner_uids)
+
+    forward_time = time.time() - start_time
+    bt.logging.info(f"Forward time: {forward_time:.2f}s")

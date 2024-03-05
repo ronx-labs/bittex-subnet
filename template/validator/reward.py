@@ -19,6 +19,7 @@
 
 import torch
 from typing import List
+import random
 
 
 def reward(query: int, response: int) -> float:
@@ -30,7 +31,8 @@ def reward(query: int, response: int) -> float:
     - float: The reward value for the miner.
     """
 
-    return 1.0 if response == query * 2 else 0
+    # return reward based on response time
+    return 1 / response.response_time
 
 
 def get_rewards(

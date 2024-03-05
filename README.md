@@ -2,6 +2,8 @@
 
 # Bittex Subnet
 
+</div>
+
 ## Overview
 The concept behind Bittex is to establish a decentralized, feeless cryptocurrency exchange platform powered by Bittensor network.
 

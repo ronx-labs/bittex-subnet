@@ -87,7 +87,8 @@ cargo build --release --features pow-faucet
 Next, run the localnet script and turn off the attempt to build the binary (as we have already done this above):
 
 ```bash
-BUILD_BINARY=0 ./scripts/localnet.sh 
+cd subtensor
+pm2 start ./scripts/localnet.sh 
 ```
 
 **NOTE**: Watch for any build or initialization outputs in this step. If you are building the project for the first time, this step will take a while to finish building, depending on your hardware.
@@ -97,19 +98,19 @@ BUILD_BINARY=0 ./scripts/localnet.sh
 `cd` to your project directory and clone the bittensor subnet template repository:
 
 ```bash
-git clone https://github.com/opentensor/bittensor-subnet-template.git
+git clone https://github.com/opentensor/bittex-subnet.git
 ```
 
 Navigate to the cloned repository:
 
 ```bash
-cd bittensor-subnet-template
+cd bittex-subnet
 ```
 
-Install the bittensor-subnet-template Python package:
+Install the bittex-subnet Python package:
 
 ```bash
-python -m pip install -e .
+python3 -m pip install -e .
 ```
 
 ## 7. Set up wallets
@@ -295,16 +296,23 @@ miner    default  1      True   0.00000  0.00000  0.00000    0.00000    0.00000 
 
 Run the subnet miner and subnet validator. Make sure to specify your subnet parameters.
 
+**Note** You may need to specify PYTHONPATH env variable.
+
+```bash
+export PYTHONPATH=/path-to-your-repo/
+echo $PYTHONPATH
+```
+
 Run the subnet miner:
 
 ```bash
-python neurons/miner.py --netuid 1 --subtensor.chain_endpoint ws://127.0.0.1:9946 --wallet.name miner --wallet.hotkey default --logging.debug
+pm2 start neurons/miner.py --interpreter venv/bin/python3 --name miner -- --netuid 1 --subtensor.chain_endpoint ws://127.0.0.1:9946 --wallet.name miner --wallet.hotkey default --logging.debug
 ```
 
 Run the subnet validator:
 
 ```bash
-python neurons/validator.py --netuid 1 --subtensor.chain_endpoint ws://127.0.0.1:9946 --wallet.name validator --wallet.hotkey default --logging.debug
+pm2 start neurons/validator.py --interpreter venv/bin/python3 --name validator -- --netuid 1 --subtensor.chain_endpoint ws://127.0.0.1:9946 --wallet.name validator --wallet.hotkey default --logging.debug
 ```
 
 ## 14. Set weights for your subnet

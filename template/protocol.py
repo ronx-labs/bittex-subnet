@@ -74,3 +74,17 @@ class Dummy(bt.Synapse):
         5
         """
         return self.dummy_output
+
+
+class SwapNotification(bt.Synapse):
+    """
+    A simple swap notification protocol representation which uses bt.Synapse as its base.
+    A validator sends this notification to the miner after a swap has been created on the smart contract.
+    """
+
+    # A string representing the swap id of the swap created on the smart contract.
+    swap_id: str
+    
+    # Output is a tuple containing the public address of the miner and encrypted swap_id
+    # Encrypted swap_id is used for verifying the ownership of the address.
+    output: typing.Optional[typing.Tuple[str, str]] = None

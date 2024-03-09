@@ -1,7 +1,7 @@
 # The MIT License (MIT)
-# Copyright © 2021 Yuma Rao
-# Copyright © 2023 Opentensor Foundation
-# Copyright © 2023 Opentensor Technologies Inc
+# Copyright © 2023 Yuma Rao
+# TODO(developer): Set your name
+# Copyright © 2023 <your name>
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -17,28 +17,19 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+import typing
 import bittensor as bt
-from typing import List, Optional, Union, Any, Dict
-from template.protocol import Dummy
-from bittensor.subnets import SubnetsAPI
 
 
-class DummyAPI(SubnetsAPI):
-    def __init__(self, wallet: "bt.wallet"):
-        super().__init__(wallet)
-        self.netuid = 33
-        self.name = "dummy"
+class SwapNotification(bt.Synapse):
+    """
+    A simple swap notification protocol representation which uses bt.Synapse as its base.
+    A validator sends this notification to the miner after a swap has been created on the smart contract.
+    """
 
-    def prepare_synapse(self, dummy_input: int) -> Dummy:
-        synapse.dummy_input = dummy_input
-        return synapse
-
-    def process_responses(
-        self, responses: List[Union["bt.Synapse", Any]]
-    ) -> List[int]:
-        outputs = []
-        for response in responses:
-            if response.dendrite.status_code != 200:
-                continue
-            return outputs.append(response.dummy_output)
-        return outputs
+    # A string representing the swap id of the swap created on the smart contract.
+    swap_id: str
+    
+    # Output is a tuple containing the public address of the miner and encrypted swap_id
+    # Encrypted swap_id is used for verifying the ownership of the address.
+    output: typing.Optional[typing.Tuple[str, str]] = None

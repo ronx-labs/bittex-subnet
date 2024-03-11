@@ -20,12 +20,6 @@ Bittex Subnet aims to be the go-to platform for users looking for the best excha
 
 ![Bittex Subnet Sequence Diagram](docs/Bittex%20Subnet%20Sequence%20Diagram.png)
 
-In the Bittex, miners contribute their assets, providing liquidity without the need to deposit their funds into centralized wallets. Their assets remain in their own wallets without exposing any sensitive information, and are full control of their assets. Miners are simply required to demonstrate their capability as exchangers, which is assessed by verified validators in a decentralized manner.
-
-At the core of the Bittex lies the smart contract. 
-
-Through this mechanism, our subnet ensures that end users receive the best possible exchange rates. The Bittex subnet aims to become the preferred platform for users seeking optimal exchange rates, thereby enhancing the popularity of the Bittensor network among a wider audience. The growing popularity of the Bittensor network is expected to spur the development of additional subnets, further accelerating AI advancement.
-
 **IMPORTANT**: If you are new to Bittensor subnets, read this section before proceeding to [Installation](#installation) section. 
 
 The Bittensor blockchain hosts multiple self-contained incentive mechanisms called **subnets**. Subnets are playing fields in which:

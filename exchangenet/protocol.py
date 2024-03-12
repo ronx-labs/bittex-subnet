@@ -18,18 +18,70 @@
 # DEALINGS IN THE SOFTWARE.
 
 import typing
+import pydantic
 import bittensor as bt
 
 
 class SwapNotification(bt.Synapse):
     """
-    A simple swap notification protocol representation which uses bt.Synapse as its base.
+    A swap notification protocol representation which uses bt.Synapse as its base.
     A validator sends this notification to the miner after a swap has been created on the smart contract.
     """
 
     # A string representing the swap id of the swap created on the smart contract.
-    swap_id: str
+    swap_id: str = pydantic.Field(
+        description="Id of the swap created on the smart contract"
+    )
     
     # Output is a tuple containing the public address of the miner and encrypted swap_id
     # Encrypted swap_id is used for verifying the ownership of the address.
-    output: typing.Optional[typing.Tuple[str, str]] = None
+    output: typing.Tuple[str, str] = pydantic.Field(
+        description="Output of the swap notification"
+    )
+
+class FinalizeSwap(bt.Synapse):
+    """
+    A finalize swap protocol representation which uses bt.Synapse as its base.
+    A validator sends this notification to the miner once the user has confirmed to finalize the swap.
+    """
+
+    # A string respresenting the swap id of the swap created on the smart contract.
+    swap_id: str = pydantic.Field(
+        description="Id of the swap created on the smart contract"
+    )
+
+    # A string representing the transaction id that is made by the randomly seleted miners.
+    transaction_id: str = pydantic.Field(
+        description="Id of the transaction made by the randomly selected miners"
+    )
+
+    # Input and Output tokens are the number of tokens that are being swapped.
+    input_token: dict = pydantic.Field({
+        "type": "ETH",
+        "amount": 3,
+        "address": "0x1234567890"
+        },
+        description="Amount of tokens that users want to swap",
+        example={
+            "type": "ETH", 
+            "amount": 3, 
+            "address": "0x1234567890"
+        }
+    )
+    output_token: dict = pydantic.Field({
+        "type": "USDT",
+        "amount": 100,
+        "address": "0x1234567890"
+        },
+        description="Amount of tokens that users receive after the swap",
+        example={
+            "type": "USDT", 
+            "amount": 100, 
+            "address": "0x1234567890"
+        },
+    )
+
+    # Output is a boolean value which is True if the swap is finalized and False otherwise.
+    output: bool = pydantic.Field(
+        description="Output of the finalize swap"
+    )

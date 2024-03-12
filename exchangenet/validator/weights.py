@@ -1,7 +1,5 @@
 # The MIT License (MIT)
-# Copyright © 2023 Yuma Rao
-# TODO(developer): Set your name
-# Copyright © 2023 <your name>
+# Copyright © 2024 Yuma Rao
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -17,39 +15,36 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import torch
-from typing import List
-from exchangenet.validator import set_weights
+import bittensor as bt
+from exchangenet.validator import get_deposit_info
 
-def reward(query: int, response: dict) -> float:
+def calculate_score(deposit_info: dict) -> float:
     """
-    Reward the miner response to the dummy request. This method returns a reward
-    value for the miner, which is used to update the miner's score.
-
-    Returns:
-    - float: The reward value for the miner.
-    """
-
-    # return reward based on response time
-    return 1 / set_weights(deposit_info=response)
-
-
-def get_rewards(
-    self,
-    query: int,
-    responses: List[float],
-) -> torch.FloatTensor:
-    """
-    Returns a tensor of rewards for the given query and responses.
+    Calculate the score of the miner based on the deposit information.
 
     Args:
-    - query (int): The query sent to the miner.
-    - responses (List[float]): A list of responses from the miner.
+    - deposit_info (dict): A dictionary containing the deposit information.
 
     Returns:
-    - torch.FloatTensor: A tensor of rewards for the given query and responses.
+    - float: The score of the miner.
     """
-    # Get all the reward results by iteratively calling your reward() function.
-    return torch.FloatTensor(
-        [reward(query, response) for response in responses]
-    ).to(self.device)
+
+    score = deposit_info["deposit_amount"] / 100
+
+    return score
+
+def set_weights(self, deposit_info: dict):
+    """
+    Set the weights of the miner based on the deposit information.
+
+    Args:
+    - deposit_info (dict): A dictionary containing the deposit information.
+    """
+
+    score = calculate_score(deposit_info)
+
+    self.weights = score
+
+    bt.logging.info(f"Set weights: {self.weights}")
+
+    return self.weights

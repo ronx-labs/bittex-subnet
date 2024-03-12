@@ -111,6 +111,10 @@ class BaseNeuron(ABC):
         ...
 
     @abstractmethod
+    async def user_request_forward(self, synapse: bt.Synapse) -> bt.Synapse:
+        ...
+
+    @abstractmethod
     def run(self):
         ...
 

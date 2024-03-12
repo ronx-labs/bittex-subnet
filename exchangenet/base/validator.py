@@ -71,6 +71,18 @@ class BaseValidatorNeuron(BaseNeuron):
         else:
             bt.logging.warning("axon off, not serving ip to chain.")
 
+        # The axon handles requests from the users who want to swap.
+        self.axon = bt.axon(wallet=self.wallet, config=self.config)
+
+        # Attach determiners which functions are called when servicing a request.
+        bt.logging.info(f"Attaching forward function to validator axon.")
+        self.axon.attach(
+            forward_fn=self.user_request_forward,
+            blacklist_fn=self.blacklist,
+            priority_fn=self.priority,
+        )
+        bt.logging.info(f"Validator axon created: {self.axon}")
+
         # Create asyncio event loop to manage async tasks.
         self.loop = asyncio.get_event_loop()
 

@@ -25,7 +25,7 @@ import bittensor as bt
 
 # Bittensor Validator Template:
 import exchangenet
-from exchangenet.validator import forward
+from exchangenet.validator import forward, user_request_forward
 
 # import base validator class which takes care of most of the boilerplate
 from exchangenet.base.validator import BaseValidatorNeuron
@@ -59,6 +59,18 @@ class Validator(BaseValidatorNeuron):
         """
         # TODO(developer): Rewrite this function based on your protocol definition.
         return await forward(self)
+
+    async def user_request_forward(self, request):
+        """
+        User request forward pass. Consists of:
+        - Generating the query
+        - Querying the miners
+        - Getting the responses
+        - Rewarding the miners
+        - Updating the scores
+        """
+        # TODO(developer): Rewrite this function based on your protocol definition.
+        return await user_request_forward(self, request)
 
 
 # The main function parses the configuration and runs the validator.

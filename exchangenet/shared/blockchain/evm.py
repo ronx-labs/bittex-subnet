@@ -16,3 +16,18 @@ class EvmChain:
         self.chain_name = chain_name
         self.bittex_contract = bittex_contract
         self.available_tokens = available_tokens
+        
+    def get_token_by_address(self, address: str) -> Optional[Token]:
+        for token in self.available_tokens:
+            if token.address == address:
+                return token
+        return None
+    
+    def get_token_by_symbol(self, symbol: str) -> Optional[Token]:
+        for token in self.available_tokens:
+            if token.symbol == symbol:
+                return token
+        return None
+    
+    def is_token_available(self, address: str) -> bool:
+        return self.get_token_by_address(address) is not None

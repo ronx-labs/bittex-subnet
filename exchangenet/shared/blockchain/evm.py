@@ -44,3 +44,8 @@ class EvmChain:
         signable_msg = encode_defunct(text=message)
         signed_message = self.web3_provider.eth.account.sign_message(signable_msg, private_key)
         return signed_message.signature.hex()
+
+    def verify_signature(self, message: str, signature: bytes, public_address: bytes) -> bool:
+        signable_msg = encode_defunct(text=message)
+        recovered_address = self.web3_provider.eth.account.recover_message(signable_msg, signature=signature)
+        return recovered_address.lower() == '0x' + public_address.hex()

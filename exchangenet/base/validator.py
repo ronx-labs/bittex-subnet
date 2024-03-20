@@ -71,13 +71,10 @@ class BaseValidatorNeuron(BaseNeuron):
         else:
             bt.logging.warning("axon off, not serving ip to chain.")
 
-        # The axon handles requests from the users who want to swap.
-        self.axon = bt.axon(wallet=self.wallet, config=self.config)
-
         # Attach determiners which functions are called when servicing a request.
         bt.logging.info(f"Attaching forward function to validator axon.")
         self.axon.attach(
-            forward_fn=self.user_request_forward,
+            forward_fn=self.forward,
             blacklist_fn=self.blacklist,
             priority_fn=self.priority,
         )
@@ -146,6 +143,16 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # Check that validator is registered on the network.
         self.sync()
+
+        # Serve passes the axon information to the network + netuid we are hosting on.
+        # This will auto-update if the axon port of external ip have changed.
+        bt.logging.info(
+            f"Serving validator axon {self.axon} on network: {self.config.subtensor.chain_endpoint} with netuid: {self.config.netuid}"
+        )
+        self.axon.serve(netuid=self.config.netuid, subtensor=self.subtensor)
+
+        # Stars the validator's axon, making it active on the network.
+        self.axon.start()
 
         bt.logging.info(f"Validator starting at block: {self.block}")
 

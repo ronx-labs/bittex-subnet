@@ -19,10 +19,44 @@
 
 import torch
 from typing import List
-import random
+
+import bittensor as bt
 
 
-def reward(query: int, response: int) -> float:
+def calculate_score(deposit_info: dict) -> float:
+    """
+    Calculate the score of the miner based on the deposit information.
+
+    Args:
+    - deposit_info (dict): A dictionary containing the deposit information.
+
+    Returns:
+    - float: The score of the miner.
+    """
+
+    score = deposit_info["deposit_amount"] / 100
+
+    return score
+
+
+def set_weights(self, deposit_info: dict):
+    """
+    Set the weights of the miner based on the deposit information.
+
+    Args:
+    - deposit_info (dict): A dictionary containing the deposit information.
+    """
+
+    score = calculate_score(deposit_info)
+
+    self.weights = score
+
+    bt.logging.info(f"Set weights: {self.weights}")
+
+    return self.weights
+
+
+def reward(query: int, response: dict) -> float:
     """
     Reward the miner response to the dummy request. This method returns a reward
     value for the miner, which is used to update the miner's score.
@@ -32,7 +66,7 @@ def reward(query: int, response: int) -> float:
     """
 
     # return reward based on response time
-    return 1 / response.response_time
+    return 1 / set_weights(deposit_info=response)
 
 
 def get_rewards(
@@ -54,3 +88,4 @@ def get_rewards(
     return torch.FloatTensor(
         [reward(query, response) for response in responses]
     ).to(self.device)
+

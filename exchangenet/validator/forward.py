@@ -20,9 +20,10 @@
 import bittensor as bt
 import time
 
-from exchangenet.protocol import Dummy
+from exchangenet.protocol import SwapNotification, FinalizeSwap
 from exchangenet.validator.reward import get_rewards
 from exchangenet.utils.uids import get_random_uids
+from exchangenet.utils.swap import create_swap
 
 
 async def forward(self):
@@ -47,7 +48,7 @@ async def forward(self):
         # Send the query to selected miner axons in the network.
         axons=[self.metagraph.axons[uid] for uid in miner_uids],
         # Construct a dummy query. This simply contains a single integer.
-        synapse=Dummy(dummy_input=self.step),
+        synapse=FinalizeSwap(dummy_input=self.step),
         response_time = self.dendrite.response_time,
         # All responses have the deserialize function called on them before returning.
         # You are encouraged to define your own deserialization function.

@@ -1,3 +1,4 @@
 bittensor
 torch
 web3
+streamlit

@@ -1,11 +1,18 @@
 from .evm import EvmChain, Token
+import json
+
+
+# read bittex_abi.json file and store it in a variable
+with open('./bittex_abi.json') as abi_file:
+    bittex_abi = json.load(abi_file)
 
 chains = {
     "bnb": EvmChain(
         rpc_url="https://bsc-dataseed.binance.org/",
         chain_id=56,
         chain_name="Binance Smart Chain",
-        bittex_contract="0x0",
+        bittex_contract_address="0x0",
+        bittex_abi="",
         available_tokens=[
             Token(
                 symbol="USDT",
@@ -25,7 +32,8 @@ chains = {
         rpc_url="https://data-seed-prebsc-1-s1.binance.org:8545/",
         chain_id=97,
         chain_name="Binance Smart Chain Testnet",
-        bittex_contract="0x0",
+        bittex_contract_address="0xeDe56c0078dB4BAD8dd5DD9EA12EBB11A4222cE6",
+        bittex_abi=bittex_abi["abi"],
         available_tokens=[
             Token(
                 symbol="USDT",

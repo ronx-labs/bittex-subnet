@@ -16,7 +16,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import bittensor as bt
-from exchangenet.validator import get_deposit_info
+from exchangenet.validator.get_info import get_deposit_info
 
 def calculate_score(deposit_info: dict) -> float:
     """

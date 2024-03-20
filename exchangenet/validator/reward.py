@@ -19,7 +19,42 @@
 
 import torch
 from typing import List
-from exchangenet.validator.weights import set_weights
+
+import bittensor as bt
+
+
+def calculate_score(deposit_info: dict) -> float:
+    """
+    Calculate the score of the miner based on the deposit information.
+
+    Args:
+    - deposit_info (dict): A dictionary containing the deposit information.
+
+    Returns:
+    - float: The score of the miner.
+    """
+
+    score = deposit_info["deposit_amount"] / 100
+
+    return score
+
+
+def set_weights(self, deposit_info: dict):
+    """
+    Set the weights of the miner based on the deposit information.
+
+    Args:
+    - deposit_info (dict): A dictionary containing the deposit information.
+    """
+
+    score = calculate_score(deposit_info)
+
+    self.weights = score
+
+    bt.logging.info(f"Set weights: {self.weights}")
+
+    return self.weights
+
 
 def reward(query: int, response: dict) -> float:
     """
@@ -53,3 +88,4 @@ def get_rewards(
     return torch.FloatTensor(
         [reward(query, response) for response in responses]
     ).to(self.device)
+

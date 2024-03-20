@@ -22,6 +22,22 @@ import pydantic
 import bittensor as bt
 
 
+class SwapRequest(bt.Synapse):
+    """
+    A swap request protocol representation which uses bt.Synapse as its base.
+    A user sends this request to the validator to notify that they want to swap tokens.
+    """
+
+    # A string representing the swap id of the swap created on the smart contract.
+    swap_id: str = pydantic.Field(
+        description="Id of the swap created on the smart contract"
+    )
+
+    # Output is a boolean value which is True if the swap is created and False otherwise.
+    output: bool = pydantic.Field(
+        description="Output of the swap request"
+    )
+
 class SwapNotification(bt.Synapse):
     """
     A swap notification protocol representation which uses bt.Synapse as its base.

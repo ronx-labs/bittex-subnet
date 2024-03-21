@@ -6,7 +6,7 @@ from .evm import EvmChain, Token
 
 # read bittex_abi.json file and store it in a variable
 current_dir = os.path.dirname(__file__)
-with open(os.path.join(current_dir, 'bittex_abi.json')) as abi_file:
+with open(os.path.join(current_dir, 'abis/bittex_abi.json')) as abi_file:
     bittex_abi = json.load(abi_file)
 
 chains = {

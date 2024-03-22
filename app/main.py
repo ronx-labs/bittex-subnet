@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
         bnb_testnet = chains["bnb_test"]
 
-        w3 = bnb_testnet.web3_provider
+        w3 = bnb_testnet.web3
 
         bittex_contract = w3.eth.contract(address=bnb_testnet.bittex_contract_address, abi=bnb_testnet.bittex_abi)
 

@@ -66,12 +66,15 @@ class EvmChain:
     def create_swap(self, input_token_address: str, output_token_address: str, amount: int, account_address: str, private_key: str) -> bytes:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
         
+        # Fetch the current recommended gas price from the network
+        current_gas_price = self.web3.eth.gas_price
+        
         # Build transaction
         nonce = self.web3.eth.get_transaction_count(account_address)
         transaction = bittex_contract.functions.createSwap(self.web3.to_checksum_address(input_token_address), self.web3.to_checksum_address(output_token_address), amount).build_transaction({
             'chainId': self.chain_id,
             'gas': 2000000,
-            'gasPrice': self.web3.to_wei('50', 'gwei'),
+            'gasPrice': current_gas_price,
             'nonce': nonce,
         })
 

@@ -4,6 +4,8 @@ from eth_account.messages import encode_defunct
 from typing import Optional, List, Dict
 from pydantic import BaseModel
 
+from exchangenet.shared.blockchain.abis import ERC20_ABI
+
 
 ZERO_ADDRESS = Web3.to_checksum_address("0x0000000000000000000000000000000000000000")
 
@@ -75,7 +77,7 @@ class EvmChain:
             'chainId': self.chain_id,
             'gas': 2000000,
             'gasPrice': current_gas_price,
-            'nonce': nonce,
+            'nonce': nonce
         })
 
         # Sign transaction

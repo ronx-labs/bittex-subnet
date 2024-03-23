@@ -2,12 +2,18 @@ import streamlit as st
 import bittensor as bt
 import random
 import asyncio
-from Crypto.Hash import keccak
+import os
+
+from dotenv import load_dotenv
+from web3 import Web3
 
 from exchangenet.shared.blockchain.chains import chains
+from exchangenet.shared.blockchain.evm import Swap, ZERO_ADDRESS
 from exchangenet.protocol import SwapRequest
 from exchangenet.utils.uids import get_query_api_nodes
 
+
+load_dotenv()
 
 async def request_swap(swap_id: str):
     """
@@ -29,7 +35,6 @@ async def request_swap(swap_id: str):
     synapse = SwapRequest(swap_id=swap_id, output=False)
     metagraph = bt.subtensor("ws://127.0.0.1:9946/").metagraph(netuid=1)
     vali_axons = await get_query_api_nodes(dendrite=dendrite, metagraph=metagraph)
-    bt.logging.info(f"vali_axons: =================================={vali_axons}")
     axons = random.choices(vali_axons, k=1)
 
     responses = await dendrite(
@@ -48,41 +53,39 @@ if __name__ == '__main__':
         outputTokenAddress = st.text_input("Enter your output token address")
         inputTokenAmount = st.number_input("Enter the amount of input token to swap")
 
-        bnb_testnet = chains["bnb_test"]
-
-        w3 = bnb_testnet.web3
-
-        bittex_contract = w3.eth.contract(address=bnb_testnet.bittex_contract_address, abi=bnb_testnet.bittex_abi)
+        bnb_test_chain = chains['bnb_test']
 
         # Check for connection to the Ethereum network
-        if not w3.is_connected():
+        if not bnb_test_chain.web3.is_connected():
             raise ConnectionError("Failed to connect to HTTPProvider")
         
         col1, col2, col3 = st.columns([1, 2, 1])
         if col1.form_submit_button("Create swap", type="primary", use_container_width=True):
             if inputTokenAddress and outputTokenAddress and inputTokenAmount:
-                st.session_state.swap = {
-                    "inputTokenAddress": inputTokenAddress,
-                    "outputTokenAddress": outputTokenAddress,
-                    "inputTokenAmount": inputTokenAmount,
-                }
-
-                st.session_state.swap_id = bittex_contract.functions.createSwap(st.session_state.swap["inputTokenAddress"], st.session_state.swap["outputTokenAddress"], int(st.session_state.swap["inputTokenAmount"])).call()
+                from_address = Web3.to_checksum_address(inputTokenAddress)
+                to_address = Web3.to_checksum_address(outputTokenAddress)
+                amount = int(inputTokenAmount)
+                account_address = Web3.to_checksum_address(os.getenv("EVM_WALLET_ADDRESS"))
+                private_key = os.getenv("EVM_WALLET_PRIVATE_KEY")
                 
-                # Convert bytes32 to hex string
-                hex_string = w3.to_hex(st.session_state.swap_id)
+                # Create swap
+                swap_id = bnb_test_chain.create_swap(from_address, to_address, amount, account_address, private_key)
 
-                # Calculate the keccak256 hash
-                hash_object = keccak.new(digest_bits=256)
-                hash_object.update(st.session_state.swap_id)
-                keccak256_hash = hash_object.hexdigest()
+                # Get swap info
+                swap = bnb_test_chain.get_swap(swap_id)
 
-                print(st.session_state.swap_id)
-                print(keccak256_hash)
+                st.session_state.swap = Swap(
+                    swap_id=swap_id,
+                    input_token_address=inputTokenAddress,
+                    output_token_address=outputTokenAddress,
+                    top_bidders=[ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS],
+                    winner=ZERO_ADDRESS,
+                    amount=int(inputTokenAmount),
+                    timestamp=swap.timestamp
+                )
 
-                print(f'swaps: {bittex_contract.functions.swaps(bytes.fromhex(keccak256_hash)).call()}')
-
-                st.write("Swap ID: " + hex_string)
+                st.write("Swap ID: " + Web3.to_hex(st.session_state.swap.swap_id))
+                st.write(st.session_state.swap.dict())
 
         if col3.form_submit_button("Request swap", type="primary", use_container_width=True):
             asyncio.run(request_swap(str(st.session_state.swap_id)))

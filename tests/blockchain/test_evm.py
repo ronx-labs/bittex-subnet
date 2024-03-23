@@ -53,6 +53,23 @@ class TestEvm(unittest.TestCase):
             timestamp=swap.timestamp
         )
         self.assertDictEqual(swap.__dict__, expected_swap.__dict__)
+        
+    def test_make_bid(self):
+        bnb_test_chain = chains['bnb_test']
+        weth_token_address = Web3.to_checksum_address(bnb_test_chain.get_token_by_symbol('WETH').address)
+        usdt_token_address = Web3.to_checksum_address(bnb_test_chain.get_token_by_symbol('USDT').address)
+        amount = 10 ** 15
+        expected_bid_amount = 10 ** 14 * 2
+        account_address = Web3.to_checksum_address('0x97EA56126d8c67168F01989f101F7282b07417Ba')
+        private_key = '5a01713ebfe789aa1a32bd5df9fce8f7e726adcfdf669aa778cd53e9f7ebb7c3'
+        
+        # Create swap
+        swap_id = bnb_test_chain.create_swap(weth_token_address, usdt_token_address, amount, account_address, private_key)
+        # Make bid
+        bnb_test_chain.make_bid(swap_id, expected_bid_amount, account_address, private_key)
+        # Assert equal
+        bid_amount = bnb_test_chain.get_bid_amount(swap_id, account_address)
+        self.assertEqual(bid_amount, expected_bid_amount)
 
 if __name__ == '__main__':
     unittest.main()

@@ -44,8 +44,10 @@ class Miner(BaseMinerNeuron):
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
         load_dotenv()
-        self.env_wallet.address = os.getenv("WALLET_ADDRESS")
-        self.env_wallet.private_key = os.getenv("WALLET_PRIVATE_KEY")
+        self.env_wallet = {
+            "address": os.getenv("EVM_WALLET_ADDRESS"),
+            "private_key": os.getenv("EVM_WALLET_PRIVATE_KEY")
+        }
 
     async def forward(
         self, synapse: exchangenet.protocol.SwapNotification

@@ -67,6 +67,8 @@ class TestEvm(unittest.TestCase):
         swap_id = bnb_test_chain.create_swap(weth_token_address, usdt_token_address, amount, account_address, private_key)
         # Make bid
         bnb_test_chain.make_bid(swap_id, expected_bid_amount, account_address, private_key)
+        # Try to make bid again from the same account
+        bnb_test_chain.make_bid(swap_id, expected_bid_amount * 2, account_address, private_key)
         # Assert equal
         bid_amount = bnb_test_chain.get_bid_amount(swap_id, account_address)
         self.assertEqual(bid_amount, expected_bid_amount)

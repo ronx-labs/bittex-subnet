@@ -4,6 +4,8 @@ from eth_account.messages import encode_defunct
 from typing import Optional, List, Dict
 from pydantic import BaseModel
 
+from exchangenet.shared.blockchain.abis import ERC20_ABI
+
 
 ZERO_ADDRESS = Web3.to_checksum_address("0x0000000000000000000000000000000000000000")
 
@@ -75,7 +77,7 @@ class EvmChain:
             'chainId': self.chain_id,
             'gas': 2000000,
             'gasPrice': current_gas_price,
-            'nonce': nonce,
+            'nonce': nonce
         })
 
         # Sign transaction
@@ -105,3 +107,47 @@ class EvmChain:
             timestamp=raw_swap_info[7]
         )
         return swap
+    
+    def make_bid(self, swap_id: bytes, amount: int, account_address: str, private_key: str) -> None:
+        bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
+        
+        # Fetch the current recommended gas price from the network
+        current_gas_price = self.web3.eth.gas_price
+        
+        # Approve the token transfer before making a bid
+        token_address = self.get_swap(swap_id).input_token_address
+        token_contract = self.web3.eth.contract(address=token_address, abi=ERC20_ABI)
+        nonce = self.web3.eth.get_transaction_count(account_address)
+        approve_tx = token_contract.functions.approve(self.web3.to_checksum_address(self.bittex_contract_address), amount).build_transaction({
+            'chainId': self.chain_id,
+            'gas': 200000,
+            'gasPrice': current_gas_price,
+            'nonce': nonce
+        })
+
+        approve_signed_txn = self.web3.eth.account.sign_transaction(approve_tx, private_key=private_key)
+        approve_txn_hash = self.web3.eth.send_raw_transaction(approve_signed_txn.rawTransaction)
+        approve_txn_receipt = self.web3.eth.wait_for_transaction_receipt(approve_txn_hash)
+        
+        # Build transaction
+        nonce = self.web3.eth.get_transaction_count(account_address)
+        transaction = bittex_contract.functions.makeBid(swap_id, amount).build_transaction({
+            'chainId': self.chain_id,
+            'gas': 2000000,
+            'gasPrice': current_gas_price,
+            'nonce': nonce
+        })
+
+        # Sign transaction
+        signed_txn = self.web3.eth.account.sign_transaction(transaction, private_key=private_key)
+
+        # Send transaction
+        txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+        # Get transaction receipt (optional)
+        txn_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
+
+    def get_bid_amount(self, swap_id: bytes, account_address: str) -> int:
+        bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
+        bid_amount = bittex_contract.functions.getBidInfo(swap_id, self.web3.to_checksum_address(account_address)).call()
+        return bid_amount

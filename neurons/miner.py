@@ -20,6 +20,9 @@
 import time
 import typing
 import bittensor as bt
+import os
+
+from dotenv import load_dotenv
 
 # Bittensor Miner Template:
 import exchangenet
@@ -27,6 +30,7 @@ import exchangenet
 # import base miner class which takes care of most of the boilerplate
 from exchangenet.base.miner import BaseMinerNeuron
 
+from exchangenet.shared.blockchain.chains import chains
 
 class Miner(BaseMinerNeuron):
     """
@@ -39,8 +43,9 @@ class Miner(BaseMinerNeuron):
 
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
-
-        # TODO(developer): Anything specific to your use case you can do here
+        load_dotenv()
+        self.env_wallet.address = os.getenv("WALLET_ADDRESS")
+        self.env_wallet.private_key = os.getenv("WALLET_PRIVATE_KEY")
 
     async def forward(
         self, synapse: exchangenet.protocol.SwapNotification
@@ -57,7 +62,28 @@ class Miner(BaseMinerNeuron):
         Returns:
             template.protocol.SwapNotification: The synapse object with the 'output' field which contains the public address and encrypted message.
         """
-        # TODO(developer): Replace with actual implementation logic.
+        
+        swap_id = synapse.swap_id
+        bnb_test_chain = chains['bnb_test']
+        synapse.output = [None, None]
+        
+        # TODO: Set the amount based on the Uniswap price.
+        # For now, we'll use a dummy amount.
+        amount = bnb_test_chain.get_swap(swap_id).amount
+        
+        # Make a bid on the swap
+        try:
+            bnb_test_chain.make_bid(swap_id, amount, self.env_wallet.address, self.env_wallet.private_key)
+        except Exception as e:
+            bt.logging.error(f"Error making bid: {e}. Failed to make a bid on swap {swap_id}.")
+            return synapse
+        
+        # Encrypt the swap_id with the miner's private key
+        encrypted_swap_id = bnb_test_chain.sign_message(swap_id, bytes.fromhex(self.env_wallet.private_key))
+        
+        # Set the output fields of the synapse
+        synapse.output[0] = self.env_wallet.address
+        synapse.output[1] = encrypted_swap_id
         
         return synapse
 

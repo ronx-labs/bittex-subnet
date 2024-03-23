@@ -2,12 +2,8 @@ import json
 import os
 
 from .evm import EvmChain, Token
+from .abis import BITTEX_ABI
 
-
-# read bittex_abi.json file and store it in a variable
-current_dir = os.path.dirname(__file__)
-with open(os.path.join(current_dir, 'abis/bittex_abi.json')) as abi_file:
-    bittex_abi = json.load(abi_file)
 
 chains = {
     "bnb": EvmChain(
@@ -35,8 +31,8 @@ chains = {
         rpc_url="https://data-seed-prebsc-1-s1.binance.org:8545/",
         chain_id=97,
         chain_name="Binance Smart Chain Testnet",
-        bittex_contract_address="0x3D15552C88B9354Beb807766E4e39E71f8003DE0",
-        bittex_abi=bittex_abi["abi"],
+        bittex_contract_address="0xE08DD76D35D27b80Ebc2C3221d5A98bFd02d8080",
+        bittex_abi=BITTEX_ABI,
         available_tokens=[
             Token(
                 symbol="USDT",
@@ -47,7 +43,7 @@ chains = {
             Token(
                 symbol="WETH",
                 name="Wrapped Ether",
-                address="0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+                address="0xd66c6B4F0be8CE5b39D52E0Fd1344c389929B378",
                 decimals=18
             )
         ],

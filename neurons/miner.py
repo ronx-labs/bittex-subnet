@@ -31,6 +31,7 @@ import exchangenet
 from exchangenet.base.miner import BaseMinerNeuron
 
 from exchangenet.shared.blockchain.chains import chains
+from exchangenet.miner.pricing import adjust_bid_amount
 
 class Miner(BaseMinerNeuron):
     """
@@ -67,13 +68,17 @@ class Miner(BaseMinerNeuron):
         bnb_test_chain = chains['bnb_test']
         synapse.output = [None, None]
         
-        # TODO: Set the amount based on the Uniswap price.
-        # For now, we'll use a dummy amount.
+        # Get the token information from the swap
+        input_token_address = bnb_test_chain.web3.to_checksum_address(bnb_test_chain.get_swap(swap_id).input_token_address)
+        output_token_address = bnb_test_chain.web3.to_checksum_address(bnb_test_chain.get_swap(swap_id).output_token_address)
         amount = bnb_test_chain.get_swap(swap_id).amount
         
+        # Adjust the bid amount
+        bid_amount = adjust_bid_amount(input_token_address, output_token_address, amount, bnb_test_chain.rpc_url)
+                
         # Make a bid on the swap
         try:
-            bnb_test_chain.make_bid(swap_id, amount, self.env_wallet.address, self.env_wallet.private_key)
+            bnb_test_chain.make_bid(swap_id, bid_amount, self.env_wallet.address, self.env_wallet.private_key)
         except Exception as e:
             bt.logging.error(f"Error making bid: {e}. Failed to make a bid on swap {swap_id}.")
             return synapse

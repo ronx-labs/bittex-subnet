@@ -2,3 +2,4 @@ bittensor
 torch
 web3
 streamlit
+uniswap-python

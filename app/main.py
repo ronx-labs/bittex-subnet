@@ -15,7 +15,7 @@ from exchangenet.utils.uids import get_query_api_nodes
 
 load_dotenv()
 
-async def request_swap(swap_id: str):
+async def request_swap(swap_id: bytes):
     """
     Retrieves the axons of query API nodes based on their availability and stake.
 
@@ -42,7 +42,7 @@ async def request_swap(swap_id: str):
         synapse=synapse,
     )
     for response in responses:
-        print(f"response: {response.dendrite.dict()}")
+        print(f"response: {responses}")
 
 
 if __name__ == '__main__':
@@ -72,23 +72,13 @@ if __name__ == '__main__':
                 swap_id = bnb_test_chain.create_swap(from_address, to_address, amount, account_address, private_key)
 
                 # Get swap info
-                swap = bnb_test_chain.get_swap(swap_id)
+                st.session_state.swap = bnb_test_chain.get_swap(swap_id)
 
-                st.session_state.swap = Swap(
-                    swap_id=swap_id,
-                    input_token_address=inputTokenAddress,
-                    output_token_address=outputTokenAddress,
-                    top_bidders=[ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS],
-                    winner=ZERO_ADDRESS,
-                    amount=int(inputTokenAmount),
-                    timestamp=swap.timestamp
-                )
-
-                st.write("Swap ID: " + Web3.to_hex(st.session_state.swap.swap_id))
+                # st.write("Swap ID: " + Web3.to_hex(st.session_state.swap.swap_id))
                 st.write(st.session_state.swap.dict())
 
         if col3.form_submit_button("Request swap", type="primary", use_container_width=True):
-            asyncio.run(request_swap(str(st.session_state.swap_id)))
+            asyncio.run(request_swap(st.session_state.swap.swap_id))
 
             st.write("Swap requested")
             

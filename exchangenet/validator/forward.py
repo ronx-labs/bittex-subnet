@@ -20,13 +20,13 @@
 import bittensor as bt
 import time
 
-from exchangenet.protocol import SwapNotification, FinalizeSwap
+from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.validator.reward import get_rewards
-from exchangenet.utils.uids import get_random_uids
+from exchangenet.utils.uids import get_random_uids, get_available_uids
 from exchangenet.utils.swap import create_swap
 
 
-async def forward(self):
+async def forward(self, synapse: SwapRequest):
     """
     The forward function is called by the validator every time step.
 
@@ -41,22 +41,26 @@ async def forward(self):
 
     # TODO(developer): Define how the validator selects a miner to query, how often, etc.
     # get_random_uids is an example method, but you can replace it with your own.
-    miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
+    miner_uids = get_available_uids(self)
+    bt.logging.info(f"Selected miners: {miner_uids}")
 
     # The dendrite client queries the network.
     responses = await self.dendrite(
         # Send the query to selected miner axons in the network.
         axons=[self.metagraph.axons[uid] for uid in miner_uids],
         # Construct a dummy query. This simply contains a single integer.
-        synapse=FinalizeSwap(dummy_input=self.step),
-        response_time = self.dendrite.response_time,
+        synapse=SwapNotification(swap_id=synapse.swap_id),
         # All responses have the deserialize function called on them before returning.
         # You are encouraged to define your own deserialization function.
         deserialize=True,
     )
 
+    # time.sleep(60 * 5) # wait for 5 mins
+
+    # TODO: get deposit info and set weights
+
     # Log the results for monitoring purposes.
-    bt.logging.info(f"Received responses: {responses}")
+    # bt.logging.info(f"Received responses: {responses}")
 
     # TODO(developer): Define how the validator scores responses.
     # Adjust the scores based on responses from miners.

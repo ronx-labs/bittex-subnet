@@ -25,6 +25,22 @@ def check_uid_availability(
     # Available otherwise.
     return True
 
+def get_available_uids(self, exclude: list = None):
+    """Returns all available uids from the metagraph.
+
+    Returns:
+        uids (torch.LongTensor): All available uids.
+    """
+    avail_uids = []
+
+    for uid in range(self.metagraph.n.item()):
+        uid_is_available = check_uid_availability(
+            self.metagraph, uid, self.config.neuron.vpermit_tao_limit
+        )
+        if uid_is_available and (exclude is None or uid not in exclude):
+            avail_uids.append(uid)
+    bt.logging.debug(f"returning available uids: {avail_uids}")
+    return avail_uids
 
 def get_random_uids(
     self, k: int, exclude: List[int] = None
@@ -118,17 +134,20 @@ async def get_query_api_nodes(dendrite, metagraph, n=0.1, timeout=3):
     Returns:
         list: A list of UIDs representing the available API nodes.
     """
-    bt.logging.debug(f"Fetching available API nodes for subnet {metagraph.netuid}")
-    vtrust_uids = [
-        uid.item() for uid in metagraph.uids if metagraph.validator_trust[uid] > 0
-    ]
+    bt.logging.info(f"Fetching available API nodes for subnet {metagraph.netuid}")
+    # vtrust_uids = [
+    #     uid.item() for uid in metagraph.uids if metagraph.validator_trust[uid] > 0
+    # ]
+
+    bt.logging.info(f"Validator trust UIDs: {metagraph.S}")
+    bt.logging.info(f"Validator trust UIDs: {torch.quantile(metagraph.S, 1 - n)}")
     top_uids = torch.where(metagraph.S > torch.quantile(metagraph.S, 1 - n))
     top_uids = top_uids[0].tolist()
-    init_query_uids = set(top_uids).intersection(set(vtrust_uids))
+    # init_query_uids = set(top_uids).intersection(set(vtrust_uids))
     query_uids, _ = await ping_uids(
-        dendrite, metagraph, init_query_uids, timeout=timeout
+        dendrite, metagraph, top_uids, timeout=timeout
     )
-    bt.logging.debug(
+    bt.logging.info(
         f"Available API node UIDs for subnet {metagraph.netuid}: {query_uids}"
     )
     return query_uids

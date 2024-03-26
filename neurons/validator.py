@@ -48,7 +48,7 @@ class Validator(BaseValidatorNeuron):
         # TODO(developer): Anything specific to your use case you can do here
 
     async def forward(
-        self, synapse: exchangenet.protocol.SwapNotification
+        self, synapse: exchangenet.protocol.SwapRequest
     ) -> exchangenet.protocol.SwapNotification:
         """
         Processes the incoming 'SwapNotification' synapse containing 'swap_id' field.
@@ -64,10 +64,10 @@ class Validator(BaseValidatorNeuron):
         """
         # TODO(developer): Replace with actual implementation logic.
         
-        return synapse
+        return forward(self, synapse)
 
     async def blacklist(
-        self, synapse: exchangenet.protocol.SwapNotification
+        self, synapse: exchangenet.protocol.SwapRequest
     ) -> typing.Tuple[bool, str]:
         """
         Determines whether an incoming request should be blacklisted and thus ignored. Your implementation should
@@ -122,8 +122,8 @@ class Validator(BaseValidatorNeuron):
             f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
         )
         return False, "Hotkey recognized!"
-
-    async def priority(self, synapse: exchangenet.protocol.SwapNotification) -> float:
+    
+    async def priority(self, synapse: exchangenet.protocol.SwapRequest) -> float:
         """
         The priority function determines the order in which requests are handled. More valuable or higher-priority
         requests are processed before others. You should design your own priority mechanism with care.

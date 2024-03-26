@@ -22,6 +22,8 @@ from typing import List
 
 import bittensor as bt
 
+from exchangenet.protocol import SwapRequest, SwapNotification
+from exchangenet.shared.blockchain.chains import chains
 
 def calculate_score(deposit_info: dict) -> float:
     """
@@ -56,23 +58,30 @@ def set_weights(self, deposit_info: dict):
     return self.weights
 
 
-def reward(query: int, response: dict) -> float:
-    """
-    Reward the miner response to the dummy request. This method returns a reward
-    value for the miner, which is used to update the miner's score.
+def reward(query: SwapRequest, response: SwapNotification) -> float:
+    # Get swap_id and account_address from the query and response
+    swap_id = bytes.fromhex(query.swap_id)
+    account_address = response.output[0]
+    encrypted_swap_id = response.output[1]
+    
+    # Get swap information from the chain
+    bnb_test_chain = chains['bnb_test']
+    bid_amount = bnb_test_chain.get_bid_amount(swap_id)
+    isVerified = bnb_test_chain.verify_swap(swap_id, encrypted_swap_id, bytes.fromhex(account_address))
+    winner = str(bnb_test_chain.get_winner(swap_id))
 
-    Returns:
-    - float: The reward value for the miner.
-    """
-
-    # return reward based on response time
-    return 1 / set_weights(deposit_info=response)
+    if isVerified:
+        if account_address == winner:
+            return bid_amount / 50
+        return bid_amount / 100
+    
+    return 0
 
 
 def get_rewards(
     self,
-    query: int,
-    responses: List[float],
+    query: SwapRequest,
+    responses: List[SwapNotification],
 ) -> torch.FloatTensor:
     """
     Returns a tensor of rewards for the given query and responses.
@@ -88,4 +97,3 @@ def get_rewards(
     return torch.FloatTensor(
         [reward(query, response) for response in responses]
     ).to(self.device)
-

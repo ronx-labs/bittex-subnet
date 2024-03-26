@@ -18,7 +18,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
-from typing import List
+from typing import List, Tuple
 
 import bittensor as bt
 
@@ -58,25 +58,24 @@ def set_weights(self, deposit_info: dict):
     return self.weights
 
 
-def reward(query: SwapRequest, response: SwapNotification) -> float:
+def reward(self, query: SwapRequest, response: Tuple) -> float:
     # Get swap_id and account_address from the query and response
     swap_id = bytes.fromhex(query.swap_id)
-    account_address = response.output[0]
-    encrypted_swap_id = response.output[1]
-    
-    # Get swap information from the chain
+    account_address = response[0]
+    encrypted_swap_id = response[1]
+
+    # Verify the account address
     bnb_test_chain = chains['bnb_test']
-    bid_amount = bnb_test_chain.get_bid_amount(swap_id)
-    isVerified = bnb_test_chain.verify_swap(swap_id, encrypted_swap_id, bytes.fromhex(account_address))
-    winner = str(bnb_test_chain.get_winner(swap_id))
+    is_verified = bnb_test_chain.verify_swap(swap_id, encrypted_swap_id, bytes.fromhex(account_address))
 
-    if isVerified:
-        if account_address == winner:
-            return bid_amount / 50
-        return bid_amount / 100
-    
-    return 0
+    if not is_verified:
+        return 0.0
 
+    # Get the bid amount and winner of the swap
+    bid_amount = bnb_test_chain.get_bid_amount(swap_id, account_address)
+    winner = bnb_test_chain.get_winner(swap_id)
+
+    return bid_amount * self.config.neuron.winner_score_rate if account_address == winner else bid_amount
 
 def get_rewards(
     self,
@@ -95,5 +94,5 @@ def get_rewards(
     """
     # Get all the reward results by iteratively calling your reward() function.
     return torch.FloatTensor(
-        [reward(query, response) for response in responses]
+        [reward(self, query, response) for response in responses]
     ).to(self.device)

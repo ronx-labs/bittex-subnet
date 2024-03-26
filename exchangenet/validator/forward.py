@@ -51,7 +51,7 @@ async def forward(self, query: SwapRequest):
         response_time = self.dendrite.response_time,
         # All responses have the deserialize function called on them before returning.
         # You are encouraged to define your own deserialization function.
-        deserialize=True,
+        deserialize=True
     )
 
     # Wait until the swap is expired
@@ -62,7 +62,7 @@ async def forward(self, query: SwapRequest):
 
     # TODO(developer): Define how the validator scores responses.
     # Adjust the scores based on responses from miners.
-    rewards = get_rewards(self, query=query, responses=responses)
+    rewards = get_rewards(self, query=query, responses=[response.output for response in responses])
 
     bt.logging.info(f"Scored responses: {rewards}")
     

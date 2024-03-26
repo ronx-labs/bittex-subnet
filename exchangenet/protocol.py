@@ -29,7 +29,7 @@ class SwapRequest(bt.Synapse):
     """
 
     # A string representing the swap id of the swap created on the smart contract.
-    swap_id: str = pydantic.Field(
+    swap_id: bytes = pydantic.Field(
         description="Id of the swap created on the smart contract"
     )
 

@@ -28,7 +28,7 @@ import bittensor as bt
 import exchangenet
 from exchangenet.validator import forward
 from exchangenet.base.validator import BaseValidatorNeuron
-
+from exchangenet.protocol import SwapRequest
 
 class Validator(BaseValidatorNeuron):
     """
@@ -47,7 +47,7 @@ class Validator(BaseValidatorNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(self):
+    async def forward(self, query: SwapRequest):
         """
         Validator forward pass. Consists of:
         - Generating the query
@@ -57,7 +57,7 @@ class Validator(BaseValidatorNeuron):
         - Updating the scores
         """
         # TODO(developer): Rewrite this function based on your protocol definition.
-        return await forward(self)
+        return await forward(self, query)
 
     async def blacklist(
         self, synapse: exchangenet.protocol.SwapNotification

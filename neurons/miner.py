@@ -80,7 +80,7 @@ class Miner(BaseMinerNeuron):
                 
         # Make a bid on the swap
         try:
-            bnb_test_chain.make_bid(swap_id, bid_amount, self.env_wallet.address, self.env_wallet.private_key)
+            bnb_test_chain.make_bid(swap_id, bid_amount, self.env_wallet["address"], self.env_wallet["private_key"])
         except Exception as e:
             bt.logging.error(f"Error making bid: {e}. Failed to make a bid on swap {swap_id}.")
             return synapse

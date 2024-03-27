@@ -60,13 +60,13 @@ def set_weights(self, deposit_info: dict):
 
 def reward(self, query: SwapRequest, response: Tuple) -> float:
     # Get swap_id and account_address from the query and response
-    swap_id = bytes.fromhex(query.swap_id)
+    swap_id = query.swap_id
     account_address = response[0]
     encrypted_swap_id = response[1]
 
     # Verify the account address
     bnb_test_chain = chains['bnb_test']
-    is_verified = bnb_test_chain.verify_swap(swap_id, encrypted_swap_id, bytes.fromhex(account_address))
+    is_verified = bnb_test_chain.verify_signature(str(swap_id), encrypted_swap_id, bytes.fromhex(account_address))
 
     if not is_verified:
         return 0.0

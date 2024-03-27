@@ -22,7 +22,7 @@ import time
 
 from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.validator.reward import get_rewards
-from exchangenet.utils.uids import get_random_uids
+from exchangenet.utils.uids import get_random_uids, get_available_uids
 from exchangenet.utils.swap import create_swap
 
 async def forward(self, query: SwapRequest):
@@ -40,7 +40,8 @@ async def forward(self, query: SwapRequest):
 
     # TODO(developer): Define how the validator selects a miner to query, how often, etc.
     # get_random_uids is an example method, but you can replace it with your own.
-    miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
+    miner_uids = get_available_uids(self)
+    bt.logging.info(f"Selected miners: {miner_uids}")
 
     # The dendrite client queries the network.
     responses = await self.dendrite(
@@ -56,9 +57,8 @@ async def forward(self, query: SwapRequest):
 
     # Wait until the swap is expired
     time.sleep(self.expiry_time)
-
     # Log the results for monitoring purposes.
-    bt.logging.info(f"Received responses: {responses}")
+    # bt.logging.info(f"Received responses: {responses}")
 
     # TODO(developer): Define how the validator scores responses.
     # Adjust the scores based on responses from miners.

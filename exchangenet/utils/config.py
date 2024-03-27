@@ -222,6 +222,20 @@ def add_validator_args(cls, parser):
     )
 
     parser.add_argument(
+        "--blacklist.force_validator_permit",
+        action="store_true",
+        help="If set, we will force incoming requests to have a permit.",
+        default=False,
+    )
+
+    parser.add_argument(
+        "--blacklist.allow_non_registered",
+        action="store_true",
+        help="If set, validators will accept queries from non registered entities. (Dangerous!)",
+        default=False,
+    )
+
+    parser.add_argument(
         "--wandb.project_name",
         type=str,
         help="The name of the project where you are sending the new run.",

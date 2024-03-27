@@ -45,8 +45,10 @@ class Miner(BaseMinerNeuron):
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
         load_dotenv()
-        self.env_wallet.address = os.getenv("WALLET_ADDRESS")
-        self.env_wallet.private_key = os.getenv("WALLET_PRIVATE_KEY")
+        self.env_wallet = {
+            "address": os.getenv("EVM_WALLET_ADDRESS"),
+            "private_key": os.getenv("EVM_WALLET_PRIVATE_KEY")
+        }
 
     async def forward(
         self, synapse: exchangenet.protocol.SwapNotification
@@ -125,17 +127,14 @@ class Miner(BaseMinerNeuron):
         Otherwise, allow the request to be processed further.
         """
         # TODO(developer): Define how miners should blacklist requests.
-        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
-        if (
-            not self.config.blacklist.allow_non_registered
-            and synapse.dendrite.hotkey not in self.metagraph.hotkeys
-        ):
+        uid = self.metagraph.hotkeys.index( synapse.dendrite.hotkey)
+        if not self.config.blacklist.allow_non_registered and synapse.dendrite.hotkey not in self.metagraph.hotkeys:
             # Ignore requests from un-registered entities.
             bt.logging.trace(
                 f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
             )
             return True, "Unrecognized hotkey"
-
+        
         if self.config.blacklist.force_validator_permit:
             # If the config is set to force validator permit, then we should only allow requests from validators.
             if not self.metagraph.validator_permit[uid]:

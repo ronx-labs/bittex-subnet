@@ -28,7 +28,7 @@ import bittensor as bt
 import exchangenet
 from exchangenet.validator import forward
 from exchangenet.base.validator import BaseValidatorNeuron
-
+from exchangenet.protocol import SwapRequest
 
 class Validator(BaseValidatorNeuron):
     """
@@ -47,24 +47,17 @@ class Validator(BaseValidatorNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(
-        self, synapse: exchangenet.protocol.SwapRequest
-    ) -> exchangenet.protocol.SwapNotification:
+    async def forward(self, query: SwapRequest):
         """
-        Processes the incoming 'SwapNotification' synapse containing 'swap_id' field.
-        A miner should get swap info from the smart contract with 'swap_id' and make a transaction to the smart contract.
-        Then it should return the public address from which the transaction was made and encrypted message
-        signed by its private key to claim the ownership of the address.
-
-        Args:
-            synapse (template.protocol.SwapNotification): The synapse object containing the 'swap_id'.
-
-        Returns:
-            template.protocol.SwapNotification: The synapse object with the 'output' field which contains the public address and encrypted message.
+        Validator forward pass. Consists of:
+        - Generating the query
+        - Querying the miners
+        - Getting the responses
+        - Rewarding the miners
+        - Updating the scores
         """
-        # TODO(developer): Replace with actual implementation logic.
-        
-        return forward(self, synapse)
+        # TODO(developer): Rewrite this function based on your protocol definition.
+        return await forward(self, query)
 
     async def blacklist(
         self, synapse: exchangenet.protocol.SwapRequest

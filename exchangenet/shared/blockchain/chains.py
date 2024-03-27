@@ -31,7 +31,7 @@ chains = {
         rpc_url="https://data-seed-prebsc-1-s1.binance.org:8545/",
         chain_id=97,
         chain_name="Binance Smart Chain Testnet",
-        bittex_contract_address="0xE08DD76D35D27b80Ebc2C3221d5A98bFd02d8080",
+        bittex_contract_address="0x66d9e8726f09e73593389f4847A4d8F7EddD5ed7",
         bittex_abi=BITTEX_ABI,
         available_tokens=[
             Token(

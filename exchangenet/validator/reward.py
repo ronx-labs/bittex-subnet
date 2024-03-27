@@ -18,10 +18,12 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
-from typing import List
+from typing import List, Tuple
 
 import bittensor as bt
 
+from exchangenet.protocol import SwapRequest, SwapNotification
+from exchangenet.shared.blockchain.chains import chains
 
 def calculate_score(deposit_info: dict) -> float:
     """
@@ -56,23 +58,29 @@ def set_weights(self, deposit_info: dict):
     return self.weights
 
 
-def reward(query: int, response: dict) -> float:
-    """
-    Reward the miner response to the dummy request. This method returns a reward
-    value for the miner, which is used to update the miner's score.
+def reward(self, query: SwapRequest, response: Tuple) -> float:
+    # Get swap_id and account_address from the query and response
+    swap_id = bytes.fromhex(query.swap_id)
+    account_address = response[0]
+    encrypted_swap_id = response[1]
 
-    Returns:
-    - float: The reward value for the miner.
-    """
+    # Verify the account address
+    bnb_test_chain = chains['bnb_test']
+    is_verified = bnb_test_chain.verify_swap(swap_id, encrypted_swap_id, bytes.fromhex(account_address))
 
-    # return reward based on response time
-    return 1 / set_weights(deposit_info=response)
+    if not is_verified:
+        return 0.0
 
+    # Get the bid amount and winner of the swap
+    bid_amount = bnb_test_chain.get_bid_amount(swap_id, account_address)
+    winner = bnb_test_chain.get_winner(swap_id)
+
+    return bid_amount * self.config.neuron.winner_score_rate if account_address == winner else bid_amount
 
 def get_rewards(
     self,
-    query: int,
-    responses: List[float],
+    query: SwapRequest,
+    responses: List[SwapNotification],
 ) -> torch.FloatTensor:
     """
     Returns a tensor of rewards for the given query and responses.
@@ -86,6 +94,5 @@ def get_rewards(
     """
     # Get all the reward results by iteratively calling your reward() function.
     return torch.FloatTensor(
-        [reward(query, response) for response in responses]
+        [reward(self, query, response) for response in responses]
     ).to(self.device)
-

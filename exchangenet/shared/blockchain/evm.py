@@ -151,3 +151,8 @@ class EvmChain:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
         bid_amount = bittex_contract.functions.getBidInfo(swap_id, self.web3.to_checksum_address(account_address)).call()
         return bid_amount
+    
+    def get_winner(self, swap_id: bytes) -> str:
+        bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
+        winner = str(bittex_contract.functions.getWinner(swap_id).call())
+        return winner

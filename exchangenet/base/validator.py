@@ -379,3 +379,6 @@ class BaseValidatorNeuron(BaseNeuron):
         self.step = state["step"]
         self.scores = state["scores"]
         self.hotkeys = state["hotkeys"]
+        
+        # Set the expiry time for the swap.
+        self.expiry_time = 60 * 5

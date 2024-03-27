@@ -49,7 +49,6 @@ async def forward(self, query: SwapRequest):
         axons=[self.metagraph.axons[uid] for uid in miner_uids],
         # Construct a query based on swapId.
         synapse=SwapNotification(swap_id=query.swap_id),
-        response_time = self.dendrite.response_time,
         # All responses have the deserialize function called on them before returning.
         # You are encouraged to define your own deserialization function.
         deserialize=True

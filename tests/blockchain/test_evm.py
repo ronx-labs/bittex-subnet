@@ -62,6 +62,20 @@ class TestEvm(unittest.TestCase):
         # Assert equal
         bid_amount = self.bnb_test_chain.get_bid_amount(swap_id, self.account_address)
         self.assertEqual(bid_amount, expected_bid_amount)
+        
+    def test_finalize_swap(self):
+        amount = 10 ** 14 * 6
+        expected_bid_amount = 10 ** 15 * 7
+        
+        # Create swap
+        swap_id = self.bnb_test_chain.create_swap(self.weth_token_address, self.usdt_token_address, amount, self.account_address, self.private_key)
+        # Make bid
+        self.bnb_test_chain.make_bid(swap_id, expected_bid_amount, self.account_address2, self.private_key2)
+        # Finalize swap
+        self.bnb_test_chain.finalize_swap(swap_id, self.account_address, self.private_key)
+        # Assert equal
+        winner = self.bnb_test_chain.get_winner(swap_id)
+        self.assertEqual(winner, self.account_address2)
 
 if __name__ == '__main__':
     unittest.main()

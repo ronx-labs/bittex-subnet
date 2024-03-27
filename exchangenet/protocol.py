@@ -21,7 +21,7 @@ import typing
 import pydantic
 import bittensor as bt
 
-
+from exchangenet.shared.blockchain.evm import ZERO_ADDRESS
 class SwapRequest(bt.Synapse):
     """
     A swap request protocol representation which uses bt.Synapse as its base.
@@ -29,7 +29,7 @@ class SwapRequest(bt.Synapse):
     """
 
     # A string representing the swap id of the swap created on the smart contract.
-    swap_id: bytes = pydantic.Field(
+    swap_id: str = pydantic.Field(
         description="Id of the swap created on the smart contract"
     )
 
@@ -45,14 +45,15 @@ class SwapNotification(bt.Synapse):
     """
 
     # A string representing the swap id of the swap created on the smart contract.
-    swap_id: bytes = pydantic.Field(
+    swap_id: str = pydantic.Field(
         description="Id of the swap created on the smart contract"
     )
     
     # Output is a tuple containing the public address of the miner and encrypted swap_id
     # Encrypted swap_id is used for verifying the ownership of the address.
     output: typing.Tuple[str, bytes] = pydantic.Field(
-        description="Output of the swap notification"
+        description="Output of the swap notification",
+        default=(ZERO_ADDRESS, b"encrypted_swap_id")
     )
 
 class FinalizeSwap(bt.Synapse):

@@ -68,7 +68,6 @@ class Miner(BaseMinerNeuron):
         
         swap_id = synapse.swap_id
         bnb_test_chain = chains['bnb_test']
-        synapse.output = [None, None]
         
         # Get the token information from the swap
         input_token_address = bnb_test_chain.web3.to_checksum_address(bnb_test_chain.get_swap(swap_id).input_token_address)
@@ -86,11 +85,10 @@ class Miner(BaseMinerNeuron):
             return synapse
         
         # Encrypt the swap_id with the miner's private key
-        encrypted_swap_id = bnb_test_chain.sign_message(str(swap_id), bytes.fromhex(self.env_wallet.private_key))
+        encrypted_swap_id = bnb_test_chain.sign_message(str(swap_id), bytes.fromhex(self.env_wallet["private_key"]))
         
         # Set the output fields of the synapse
-        synapse.output[0] = self.env_wallet.address
-        synapse.output[1] = encrypted_swap_id
+        synapse.output = self.env_wallet["address"], encrypted_swap_id
         
         return synapse
 

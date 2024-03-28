@@ -65,6 +65,29 @@ class EvmChain:
         recovered_address = self.web3.eth.account.recover_message(signable_msg, signature=signature)
         return recovered_address.lower() == '0x' + public_address.hex()
 
+    def approve(self, token_address: str, owner_address: str, spender_address: str, token_amount: int, owner_private_key: str) -> None:
+        # Fetch the current recommended gas price from the network
+        current_gas_price = self.web3.eth.gas_price
+        
+        # Approve the token transfer
+        token_contract = self.web3.eth.contract(address=token_address, abi=ERC20_ABI)
+        nonce = self.web3.eth.get_transaction_count(owner_address)
+        approve_tx = token_contract.functions.approve(self.web3.to_checksum_address(spender_address), token_amount).build_transaction({
+            'chainId': self.chain_id,
+            'gas': 200000,
+            'gasPrice': current_gas_price,
+            'nonce': nonce
+        })
+        
+        # Sign transaction
+        approve_signed_txn = self.web3.eth.account.sign_transaction(approve_tx, private_key=owner_private_key)
+        
+        # Send transaction
+        approve_txn_hash = self.web3.eth.send_raw_transaction(approve_signed_txn.rawTransaction)
+        
+        # Get transaction receipt (optional)
+        approve_txn_receipt = self.web3.eth.wait_for_transaction_receipt(approve_txn_hash)
+
     def create_swap(self, input_token_address: str, output_token_address: str, amount: int, account_address: str, private_key: str) -> bytes:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
         
@@ -116,19 +139,8 @@ class EvmChain:
         
         # Approve the token transfer before making a bid
         token_address = self.get_swap(swap_id).output_token_address
-        token_contract = self.web3.eth.contract(address=token_address, abi=ERC20_ABI)
-        nonce = self.web3.eth.get_transaction_count(account_address)
-        approve_tx = token_contract.functions.approve(self.web3.to_checksum_address(self.bittex_contract_address), amount).build_transaction({
-            'chainId': self.chain_id,
-            'gas': 200000,
-            'gasPrice': current_gas_price,
-            'nonce': nonce
-        })
+        self.approve(token_address, account_address, self.bittex_contract_address, amount, private_key)
 
-        approve_signed_txn = self.web3.eth.account.sign_transaction(approve_tx, private_key=private_key)
-        approve_txn_hash = self.web3.eth.send_raw_transaction(approve_signed_txn.rawTransaction)
-        approve_txn_receipt = self.web3.eth.wait_for_transaction_receipt(approve_txn_hash)
-        
         # Build transaction
         nonce = self.web3.eth.get_transaction_count(account_address)
         transaction = bittex_contract.functions.makeBid(swap_id, amount).build_transaction({
@@ -153,21 +165,11 @@ class EvmChain:
         # Fetch the current recommended gas price from the network
         current_gas_price = self.web3.eth.gas_price
         
-        # Approve the token transfer before finalizing the swap
-        token_address = self.get_swap(swap_id).input_token_address
-        token_amount = self.get_swap(swap_id).amount
-        token_contract = self.web3.eth.contract(address=token_address, abi=ERC20_ABI)
-        nonce = self.web3.eth.get_transaction_count(account_address)
-        approve_tx = token_contract.functions.approve(self.web3.to_checksum_address(self.bittex_contract_address), token_amount).build_transaction({
-            'chainId': self.chain_id,
-            'gas': 200000,
-            'gasPrice': current_gas_price,
-            'nonce': nonce
-        })
-
-        approve_signed_txn = self.web3.eth.account.sign_transaction(approve_tx, private_key=private_key)
-        approve_txn_hash = self.web3.eth.send_raw_transaction(approve_signed_txn.rawTransaction)
-        approve_txn_receipt = self.web3.eth.wait_for_transaction_receipt(approve_txn_hash)
+        # Approve the token transfer before making a bid
+        swap = self.get_swap(swap_id)
+        token_address = swap.input_token_address
+        token_amount = swap.amount
+        self.approve(token_address, account_address, self.bittex_contract_address, token_amount, private_key)
         
         # Build transaction
         nonce = self.web3.eth.get_transaction_count(account_address)

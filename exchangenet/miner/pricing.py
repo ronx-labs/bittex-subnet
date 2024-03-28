@@ -14,7 +14,7 @@ def adjust_bid_amount(input_token: str, output_token: str, amount: int, provider
 
     # A miner can adjust the bid amount based on the quote amount
     # Any logic can be implemented here
-    adjustment_factor = float(os.getenv("ADJUSTMENT_FACTOR", 1.05))
+    adjustment_factor = float(os.getenv("UNISWAP_PRICE_MULTIPLIER", 1.05))
 
     bid_amount = int(quote_amount * adjustment_factor)
     return bid_amount

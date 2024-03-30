@@ -12,22 +12,20 @@ class TestEvm(unittest.TestCase):
         self.bnb_test_chain = chains['bnb_test']
         self.weth_token_address = Web3.to_checksum_address(self.bnb_test_chain.get_token_by_symbol('WETH').address)
         self.usdt_token_address = Web3.to_checksum_address(self.bnb_test_chain.get_token_by_symbol('USDT').address)
-        self.public_address = bytes.fromhex('97EA56126d8c67168F01989f101F7282b07417Ba')
         self.account_address = Web3.to_checksum_address('0x97EA56126d8c67168F01989f101F7282b07417Ba')
         self.private_key = '5a01713ebfe789aa1a32bd5df9fce8f7e726adcfdf669aa778cd53e9f7ebb7c3'
-        self.public_address2 = bytes.fromhex('4e080B50da7238e2Ff653BB562E1B8186B5A58A0')
         self.account_address2 = Web3.to_checksum_address('0x4e080B50da7238e2Ff653BB562E1B8186B5A58A0')
         self.private_key2 = 'a5a74c43f8b65afaf705479b30cbd397e02b8f8eb1a31ebc50970a005b9421ef'
 
     def test_sign_verify_message(self):
         # Test Case 1
         signature = self.bnb_test_chain.sign_message('Random message', bytes.fromhex(self.private_key))
-        is_valid = self.bnb_test_chain.verify_signature('Random message', signature, self.public_address)
+        is_valid = self.bnb_test_chain.verify_signature('Random message', signature, bytes.fromhex(self.account_address[2:]))
         self.assertEqual(is_valid, True)
 
         # Test Case 2        
         signature = self.bnb_test_chain.sign_message('Random message', bytes.fromhex(self.private_key))
-        is_valid = self.bnb_test_chain.verify_signature('Random message', signature, self.public_address2)
+        is_valid = self.bnb_test_chain.verify_signature('Random message', signature, bytes.fromhex(self.account_address2[2:]))
         self.assertEqual(is_valid, False)
         
     def test_create_swap(self):
@@ -56,11 +54,11 @@ class TestEvm(unittest.TestCase):
         # Create swap
         swap_id = self.bnb_test_chain.create_swap(self.weth_token_address, self.usdt_token_address, amount, self.account_address, self.private_key)
         # Make bid
-        self.bnb_test_chain.make_bid(swap_id, expected_bid_amount, self.account_address, self.private_key)
+        self.bnb_test_chain.make_bid(swap_id, expected_bid_amount, self.account_address2, self.private_key2)
         # Try to make bid again from the same account
-        self.bnb_test_chain.make_bid(swap_id, expected_bid_amount * 2, self.account_address, self.private_key)
+        self.bnb_test_chain.make_bid(swap_id, expected_bid_amount * 2, self.account_address2, self.private_key2)
         # Assert equal
-        bid_amount = self.bnb_test_chain.get_bid_amount(swap_id, self.account_address)
+        bid_amount = self.bnb_test_chain.get_bid_amount(swap_id, self.account_address2)
         self.assertEqual(bid_amount, expected_bid_amount)
         
     def test_finalize_swap(self):

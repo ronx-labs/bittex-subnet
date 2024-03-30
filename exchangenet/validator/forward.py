@@ -24,6 +24,8 @@ from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.validator.reward import get_rewards
 from exchangenet.utils.uids import get_random_uids, get_available_uids
 from exchangenet.utils.swap import create_swap
+from exchangenet.shared.blockchain.chains import chains
+
 
 async def forward(self, query: SwapRequest):
     """
@@ -54,19 +56,23 @@ async def forward(self, query: SwapRequest):
         deserialize=True
     )
 
-    # Wait until the swap is expired
-    time.sleep(self.expiry_time)
     # Log the results for monitoring purposes.
     # bt.logging.info(f"Received responses: {responses}")
 
-    # TODO(developer): Define how the validator scores responses.
-    # Adjust the scores based on responses from miners.
-    rewards = get_rewards(self, query=query, responses=[response.output for response in responses])
-
-    bt.logging.info(f"Scored responses: {rewards}")
+    for swap_id in self.swap_ids:
+        if chains['bnb_test'].is_finalized(swap_id) or chains['bnb_test'].is_expired(swap_id):
+            query.swap_id = swap_id
+            # TODO: Get responses from the uids of bidders on this swap_id
     
-    # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-    self.update_scores(rewards, miner_uids)
+            # Adjust the scores based on responses from miners.
+            rewards = get_rewards(self, query=query, responses=[response.output for response in responses])
+            bt.logging.info(f"Scored responses: {rewards}")
+            
+            # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
+            self.update_scores(rewards, miner_uids)
+            
+            # Remove the swap_id from the list of active swap_ids
+            self.swap_ids.remove(swap_id)
 
     forward_time = time.time() - start_time
     bt.logging.info(f"Forward time: {forward_time:.2f}s")

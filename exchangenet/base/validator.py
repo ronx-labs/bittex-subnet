@@ -48,6 +48,9 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # Save a copy of the hotkeys to local memory.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
+        
+        # Save the swap ids to local memory.
+        self.swap_ids = []
 
         # Dendrite lets us send messages to other nodes (axons) in the network.
         if self.config.mock:

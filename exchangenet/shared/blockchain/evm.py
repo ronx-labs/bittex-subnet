@@ -176,6 +176,24 @@ class EvmChain:
         # Sign and send transaction
         self.send_transaction(transaction, private_key)
 
+    def withdraw_bid(self, swap_id: bytes, account_address: str, private_key: str) -> None:
+        bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
+
+        # Fetch the current recommended gas price from the network
+        current_gas_price = self.web3.eth.gas_price
+      
+        # Build transaction
+        nonce = self.web3.eth.get_transaction_count(account_address)
+        transaction = bittex_contract.functions.withdrawBid(swap_id).build_transaction({
+            'chainId': self.chain_id,
+            'gas': 2000000,
+            'gasPrice': current_gas_price,
+            'nonce': nonce
+        })
+
+        # Sign and send transaction
+        self.send_transaction(transaction, private_key)
+
     def get_bid_amount(self, swap_id: bytes, account_address: str) -> int:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
         bid_amount = bittex_contract.functions.getBidInfo(swap_id, self.web3.to_checksum_address(account_address)).call()

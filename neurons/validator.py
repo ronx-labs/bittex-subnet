@@ -28,7 +28,8 @@ import bittensor as bt
 import exchangenet
 from exchangenet.validator import forward
 from exchangenet.base.validator import BaseValidatorNeuron
-from exchangenet.protocol import SwapRequest
+from exchangenet.utils.uids import get_available_uids
+from exchangenet.protocol import SwapRequest, SwapNotification
 
 class Validator(BaseValidatorNeuron):
     """
@@ -58,6 +59,35 @@ class Validator(BaseValidatorNeuron):
         """
         # TODO(developer): Rewrite this function based on your protocol definition.
         return await forward(self, query)
+
+    async def swap_request(self, query: SwapRequest):
+        """
+        The swap_request function is called by the validator every time swap requests are received.
+        It sends the swap notification to the miners 
+
+        Args:
+            synapse (template.protocol.SwapRequest): The incoming swap request.
+        """
+            
+        # TODO(developer): Define how the validator selects a miner to query, how often, etc.
+        # get_random_uids is an example method, but you can replace it with your own.
+        miner_uids = get_available_uids(self)
+        bt.logging.info(f"Selected miners: {miner_uids}")
+
+        # The dendrite client queries the network.
+        responses = await self.dendrite(
+            # Send the query to selected miner axons in the network.
+            axons=[self.metagraph.axons[uid] for uid in miner_uids],
+            # Construct a query based on swapId.
+            synapse=SwapNotification(swap_id=query.swap_id),
+            # All responses have the deserialize function called on them before returning.
+            # You are encouraged to define your own deserialization function.
+            deserialize=True
+        )
+
+        for response in responses:
+            # Log the responses for monitoring purposes.
+            bt.logging.info(f"response: {response}")
 
     async def blacklist(
         self, synapse: exchangenet.protocol.SwapRequest

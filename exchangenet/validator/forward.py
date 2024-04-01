@@ -22,12 +22,10 @@ import time
 
 from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.validator.reward import get_rewards
-from exchangenet.utils.uids import get_random_uids, get_available_uids
-from exchangenet.utils.swap import create_swap
 from exchangenet.shared.blockchain.chains import chains
 
 
-async def forward(self, query: SwapRequest):
+async def forward(self):
     """
     The forward function is called by the validator every time step.
 
@@ -39,22 +37,6 @@ async def forward(self, query: SwapRequest):
     """
     # Log the start time for monitoring purposes.
     start_time = time.time()
-
-    # TODO(developer): Define how the validator selects a miner to query, how often, etc.
-    # get_random_uids is an example method, but you can replace it with your own.
-    miner_uids = get_available_uids(self)
-    bt.logging.info(f"Selected miners: {miner_uids}")
-
-    # The dendrite client queries the network.
-    responses = await self.dendrite(
-        # Send the query to selected miner axons in the network.
-        axons=[self.metagraph.axons[uid] for uid in miner_uids],
-        # Construct a query based on swapId.
-        synapse=SwapNotification(swap_id=query.swap_id),
-        # All responses have the deserialize function called on them before returning.
-        # You are encouraged to define your own deserialization function.
-        deserialize=True
-    )
 
     # Log the results for monitoring purposes.
     # bt.logging.info(f"Received responses: {responses}")

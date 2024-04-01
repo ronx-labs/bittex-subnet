@@ -77,7 +77,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # Attach determiners which functions are called when servicing a request.
         bt.logging.info(f"Attaching forward function to validator axon.")
         self.axon.attach(
-            forward_fn=self.forward,
+            forward_fn=self.swap_request,
             blacklist_fn=self.blacklist,
             priority_fn=self.priority,
         )

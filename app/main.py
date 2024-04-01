@@ -51,20 +51,22 @@ if __name__ == '__main__':
         outputTokenAddress = st.text_input("Enter your output token address")
         inputTokenAmount = st.number_input("Enter the amount of input token to swap")
 
+        # get wallet info from .env
+        account_address = Web3.to_checksum_address(os.getenv("EVM_WALLET_ADDRESS"))
+        private_key = os.getenv("EVM_WALLET_PRIVATE_KEY")
+
         bnb_test_chain = chains['bnb_test']
 
         # Check for connection to the Ethereum network
         if not bnb_test_chain.web3.is_connected():
             raise ConnectionError("Failed to connect to HTTPProvider")
         
-        col1, col2, col3 = st.columns([1, 2, 1])
+        col1, col2, col3 = st.columns([1, 1, 1])
         if col1.form_submit_button("Create swap", type="primary", use_container_width=True):
             if inputTokenAddress and outputTokenAddress and inputTokenAmount:
                 from_address = Web3.to_checksum_address(inputTokenAddress)
                 to_address = Web3.to_checksum_address(outputTokenAddress)
                 amount = int(inputTokenAmount)
-                account_address = Web3.to_checksum_address(os.getenv("EVM_WALLET_ADDRESS"))
-                private_key = os.getenv("EVM_WALLET_PRIVATE_KEY")
                 
                 # Create swap
                 swap_id = bnb_test_chain.create_swap(from_address, to_address, amount, account_address, private_key)
@@ -73,11 +75,22 @@ if __name__ == '__main__':
                 st.session_state.swap_id = Web3.to_hex(swap_id)
                 st.session_state.swap = bnb_test_chain.get_swap(swap_id)
 
-                # st.write("Swap ID: " + Web3.to_hex(st.session_state.swap.swap_id))
+                st.write("Swap ID: " + st.session_state.swap_id)
 
-        if col3.form_submit_button("Request swap", type="primary", use_container_width=True):
+        if col2.form_submit_button("Request swap", type="primary", use_container_width=True):
+            # Request swap if swap exists
             if st.session_state.swap is not None:
                 asyncio.run(request_swap(st.session_state.swap_id))
 
+                st.session_state.swap_requested = True
                 st.write("Swap requested")
+
+        
+        if col3.form_submit_button("Finalize swap", type="primary", use_container_width=True):
+            # Finalize swap
+            bnb_test_chain.finalize_swap(st.session_state.swap_id, account_address, private_key)
+            
+            winner = bnb_test_chain.get_winner(st.session_state.swap_id)
+            st.write("Winner: " + winner)
+                
             

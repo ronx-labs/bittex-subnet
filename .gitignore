@@ -160,3 +160,6 @@ cython_debug/
 #.idea/
 
 testing/
+
+# miner util methods
+neurons/utils.py

@@ -33,6 +33,7 @@ from exchangenet.base.miner import BaseMinerNeuron
 from exchangenet.shared.blockchain.chains import chains
 from exchangenet.miner.pricing import adjust_bid_amount
 
+
 class Miner(BaseMinerNeuron):
     """
     Your miner neuron class. You should use this class to define your miner's behavior. In particular, you should replace the forward function with your own logic. You may also want to override the blacklist and priority functions according to your needs.
@@ -75,7 +76,10 @@ class Miner(BaseMinerNeuron):
         amount = bnb_test_chain.get_swap(swap_id).amount
         
         # Adjust the bid amount
-        bid_amount = adjust_bid_amount(input_token_address, output_token_address, amount, bnb_test_chain.rpc_url)
+        if self.config.custom.utils:
+            bid_amount = self.utils.adjust_bid_amount(input_token_address, output_token_address, amount, bnb_test_chain.rpc_url)
+        else:
+            bid_amount = 1
                 
         # Make a bid on the swap
         try:
@@ -177,6 +181,7 @@ class Miner(BaseMinerNeuron):
             f"Prioritizing {synapse.dendrite.hotkey} with value: ", prirority
         )
         return prirority
+
 
 # This is the main function, which runs the miner.
 if __name__ == "__main__":

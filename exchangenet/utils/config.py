@@ -158,6 +158,13 @@ def add_miner_args(cls, parser):
         help="Wandb entity to log to.",
     )
 
+    parser.add_argument(
+        "--custom.utils",
+        type=bool,
+        default=False,
+        help="If set, miner will use custom logics that are implemented in utils.py.",
+    )
+
 
 def add_validator_args(cls, parser):
     """Add validator specific arguments to the parser."""

@@ -51,6 +51,14 @@ class BaseMinerNeuron(BaseNeuron):
                 "You are allowing non-registered entities to send requests to your miner. This is a security risk."
             )
 
+        # Notify user if they are using custom logics.
+        if self.config.custom.utils:
+            bt.logging.info(
+                "You are using custom logics that are implemented in the utils.py file. Make sure to generate utils.py file via the bash script."
+            )
+            from neurons.utils import MinerUtil
+            self.utils = MinerUtil()
+
         # The axon handles request processing, allowing validators to send this miner requests.
         self.axon = bt.axon(wallet=self.wallet, config=self.config)
 

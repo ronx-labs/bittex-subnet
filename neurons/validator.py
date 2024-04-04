@@ -79,13 +79,14 @@ class Validator(BaseValidatorNeuron):
             # Send the query to selected miner axons in the network.
             axons=[self.metagraph.axons[uid] for uid in miner_uids],
             # Construct a query based on swapId.
-            synapse=SwapNotification(swap_id=query.swap_id),
+            synapse=SwapNotification(chain_name=query.chain_name, swap_id=query.swap_id),
             # All responses have the deserialize function called on them before returning.
             # You are encouraged to define your own deserialization function.
             deserialize=True
         )
 
         swap_id = bytes.fromhex(query.swap_id[2:])
+        self.swap_id_chain[swap_id] = query.chain_name
 
         for response in responses:
             # Store the responses to use in the reward function.

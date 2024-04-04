@@ -15,7 +15,7 @@ from exchangenet.utils.uids import get_query_api_nodes
 
 load_dotenv()
 
-async def request_swap(swap_id: str):
+async def request_swap(chain_name: str, swap_id: str):
     """
     Retrieves the axons of query API nodes based on their availability and stake.
 
@@ -34,7 +34,7 @@ async def request_swap(swap_id: str):
     wallet = bt.wallet(name="validator1", hotkey="hotkey_v1")
     dendrite = bt.dendrite(wallet=wallet)
 
-    synapse = SwapRequest(swap_id=swap_id, output=False)
+    synapse = SwapRequest(chain_name=chain_name, swap_id=swap_id, output=False)
     metagraph = bt.subtensor("ws://127.0.0.1:9946/").metagraph(netuid=1)
     vali_axons = await get_query_api_nodes(dendrite=dendrite, metagraph=metagraph)
     axons = random.choices(vali_axons, k=1)
@@ -51,13 +51,14 @@ async def request_swap(swap_id: str):
 
 if __name__ == '__main__':
     with st.form("create_swap_form", border=False):
+        chain_name = st.selectbox("Select chain", chains.keys())
         account_address = st.text_input("Enter your account address")
         private_key = st.text_input("Enter your private key")
         input_token_address = st.text_input("Enter your input token address")
         output_token_address = st.text_input("Enter your output token address")
         input_token_amount = st.number_input("Enter the amount of input token to swap")
 
-        chain = chains[os.getenv("NETWORK_MODE")]
+        chain = chains[chain_name]
 
         # Check for connection to the Ethereum network
         if not chain.web3.is_connected():
@@ -83,7 +84,7 @@ if __name__ == '__main__':
         if col2.form_submit_button("Request swap", type="primary", use_container_width=True):
             # Request swap if swap exists
             if st.session_state.swap is not None:
-                asyncio.run(request_swap(Web3.to_hex(st.session_state.swap_id)))
+                asyncio.run(request_swap(chain_name, Web3.to_hex(st.session_state.swap_id)))
 
                 st.session_state.swap_requested = True
                 st.write("Swap requested")

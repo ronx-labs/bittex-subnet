@@ -65,8 +65,8 @@ def reward(self, query: SwapRequest, response: Tuple) -> float:
     encrypted_swap_id = response[1]
 
     # Verify the account address
-    bnb_test_chain = chains['bnb_test']
-    is_verified = bnb_test_chain.verify_signature(str(swap_id), encrypted_swap_id, bytes.fromhex(account_address[2:]))
+    chain = chains[os.getenv("NETWORK_MODE")]
+    is_verified = chain.verify_signature(chain.web3.to_hex(swap_id), encrypted_swap_id, bytes.fromhex(account_address[2:]))
 
     if not is_verified:
         return 0.0

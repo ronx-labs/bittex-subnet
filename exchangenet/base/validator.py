@@ -49,8 +49,12 @@ class BaseValidatorNeuron(BaseNeuron):
         # Save a copy of the hotkeys to local memory.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         
-        # Save the swap information to local memory.
+        # Save the information needed for sign and verification.
+        # {swap_id: [(uid, signature, pubkey)]}
         self.swaps: Dict[bytes, List[Tuple[int, str, str]]] = {}
+        
+        # Save the chain name per swap id.
+        self.swap_id_chain: Dict[bytes, str] = {}
         
         # Set the expiry time for the swap.
         self.expiry_time = 60 * 5

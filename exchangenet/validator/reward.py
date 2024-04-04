@@ -67,7 +67,8 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str]) -> float:
     encrypted_swap_id = base64.b64decode(encrypted_swap_id)
 
     # Verify the account address
-    chain = chains[os.getenv("NETWORK_MODE")]
+    chain_name = self.swap_id_chain[swap_id]
+    chain = chains[chain_name]
     is_verified = chain.verify_signature(chain.web3.to_hex(swap_id), encrypted_swap_id, bytes.fromhex(account_address[2:]))
 
     if not is_verified:

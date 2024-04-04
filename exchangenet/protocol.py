@@ -28,6 +28,11 @@ class SwapRequest(bt.Synapse):
     A user sends this request to the validator to notify that they want to swap tokens.
     """
 
+    # Name of the chain on which the swap is to be made.
+    chain_name: str = pydantic.Field(
+        description="Name of the chain on which the swap is to be made"
+    )
+
     # Swap id of the swap created on the smart contract.
     swap_id: str = pydantic.Field(
         description="Id of the swap created on the smart contract"
@@ -43,6 +48,11 @@ class SwapNotification(bt.Synapse):
     A swap notification protocol representation which uses bt.Synapse as its base.
     A validator sends this notification to the miner after a swap has been created on the smart contract.
     """
+
+    # Name of the chain on which the swap is to be made.
+    chain_name: str = pydantic.Field(
+        description="Name of the chain on which the swap is to be made"
+    )
 
     # Swap id of the swap created on the smart contract.
     swap_id: str = pydantic.Field(

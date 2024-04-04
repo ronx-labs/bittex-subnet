@@ -47,15 +47,13 @@ async def request_swap(swap_id: str):
 
 if __name__ == '__main__':
     with st.form("create_swap_form", border=False):
-        inputTokenAddress = st.text_input("Enter your input token address")
-        outputTokenAddress = st.text_input("Enter your output token address")
-        inputTokenAmount = st.number_input("Enter the amount of input token to swap")
+        account_address = st.text_input("Enter your account address")
+        private_key = st.text_input("Enter your private key")
+        input_token_address = st.text_input("Enter your input token address")
+        output_token_address = st.text_input("Enter your output token address")
+        input_token_amount = st.number_input("Enter the amount of input token to swap")
 
-        # get wallet info from .env
-        account_address = Web3.to_checksum_address(os.getenv("EVM_WALLET_ADDRESS"))
-        private_key = os.getenv("EVM_WALLET_PRIVATE_KEY")
-
-        bnb_test_chain = chains['bnb_test']
+        chain = chains[os.getenv("NETWORK_MODE")]
 
         # Check for connection to the Ethereum network
         if not bnb_test_chain.web3.is_connected():

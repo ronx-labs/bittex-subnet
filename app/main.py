@@ -29,7 +29,9 @@ async def request_swap(swap_id: str):
     Returns:
         list: A list of axon objects for the available API nodes.
     """
-    wallet = bt.wallet(name="vali", hotkey="vali_hotkey")
+    # TODO: Replace the wallet with the actual validator wallet
+    # Load test wallet
+    wallet = bt.wallet(name="validator1", hotkey="hotkey_v1")
     dendrite = bt.dendrite(wallet=wallet)
 
     synapse = SwapRequest(swap_id=swap_id, output=False)
@@ -39,10 +41,11 @@ async def request_swap(swap_id: str):
 
     responses = await dendrite(
         axons=[metagraph.axons[uid] for uid in axons],
-        synapse=synapse,
+        synapse=synapse
     )
+    
     for response in responses:
-        print(f"response: {responses}")
+        print(f"response: {response}")
 
 
 if __name__ == '__main__':
@@ -83,12 +86,9 @@ if __name__ == '__main__':
                 st.session_state.swap_requested = True
                 st.write("Swap requested")
 
-        
         if col3.form_submit_button("Finalize swap", type="primary", use_container_width=True):
             # Finalize swap
             bnb_test_chain.finalize_swap(st.session_state.swap_id, account_address, private_key)
             
             winner = bnb_test_chain.get_winner(st.session_state.swap_id)
             st.write("Winner: " + winner)
-                
-            

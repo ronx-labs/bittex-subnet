@@ -73,15 +73,15 @@ if __name__ == '__main__':
                 swap_id = bnb_test_chain.create_swap(from_address, to_address, amount, account_address, private_key)
 
                 # Get swap info
-                st.session_state.swap_id = Web3.to_hex(swap_id)
-                st.session_state.swap = bnb_test_chain.get_swap(swap_id)
+                st.session_state.swap_id = swap_id
+                st.session_state.swap = chain.get_swap(swap_id)
 
-                st.write("Swap ID: " + st.session_state.swap_id)
+                st.write("Swap ID: " + Web3.to_hex(st.session_state.swap_id))
 
         if col2.form_submit_button("Request swap", type="primary", use_container_width=True):
             # Request swap if swap exists
             if st.session_state.swap is not None:
-                asyncio.run(request_swap(st.session_state.swap_id))
+                asyncio.run(request_swap(Web3.to_hex(st.session_state.swap_id)))
 
                 st.session_state.swap_requested = True
                 st.write("Swap requested")

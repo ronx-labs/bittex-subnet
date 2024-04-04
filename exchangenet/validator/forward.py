@@ -41,18 +41,20 @@ async def forward(self):
     # Log the results for monitoring purposes.
     # bt.logging.info(f"Received responses: {responses}")
 
-    for swap_id in self.swap_ids:
+    for swap_id in self.swaps.copy():
+        bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
         if chains['bnb_test'].is_finalized(swap_id) or chains['bnb_test'].is_expired(swap_id):
-            query.swap_id = swap_id
-            # TODO: Get responses from the uids of bidders on this swap_id
-    
+            # Get swap info from the swap_id and remove it from the swaps dictionary.
+            sign_info_list = self.swaps.pop(swap_id)
+            
             # Adjust the scores based on responses from miners.
-            rewards = get_rewards(self, query=query, responses=[response.output for response in responses])
+            rewards = get_rewards(self, swap_id, sign_info_list)
             bt.logging.info(f"Scored responses: {rewards}")
             
             # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-            self.update_scores(rewards, miner_uids)
-            
+            uids = [sign_info[0] for sign_info in sign_info_list if sign_info[0] >= 0]
+            self.update_scores(rewards, uids)
+    
     time.sleep(5)
 
     forward_time = time.time() - start_time

@@ -79,8 +79,8 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str]) -> float:
 
 def get_rewards(
     self,
-    query: SwapRequest,
-    responses: List[SwapNotification],
+    swap_id: bytes,
+    sign_info_list: List[Tuple[int, str, str]]
 ) -> torch.FloatTensor:
     """
     Returns a tensor of rewards for the given query and responses.
@@ -94,5 +94,5 @@ def get_rewards(
     """
     # Get all the reward results by iteratively calling your reward() function.
     return torch.FloatTensor(
-        [reward(self, query, response) for response in responses]
+        [reward(self, swap_id, sign_info) for sign_info in sign_info_list if sign_info[0] >= 0]
     ).to(self.device)

@@ -28,7 +28,7 @@ class SwapRequest(bt.Synapse):
     A user sends this request to the validator to notify that they want to swap tokens.
     """
 
-    # A string representing the swap id of the swap created on the smart contract.
+    # Swap id of the swap created on the smart contract.
     swap_id: str = pydantic.Field(
         description="Id of the swap created on the smart contract"
     )
@@ -44,16 +44,16 @@ class SwapNotification(bt.Synapse):
     A validator sends this notification to the miner after a swap has been created on the smart contract.
     """
 
-    # A string representing the swap id of the swap created on the smart contract.
+    # Swap id of the swap created on the smart contract.
     swap_id: str = pydantic.Field(
         description="Id of the swap created on the smart contract"
     )
     
-    # Output is a tuple containing the public address of the miner and encrypted swap_id
+    # Output is a tuple containing the uid and public address of the miner and encrypted swap_id
     # Encrypted swap_id is used for verifying the ownership of the address.
-    output: typing.Tuple[str, bytes] = pydantic.Field(
+    output: typing.Tuple[int, str, str] = pydantic.Field(
         description="Output of the swap notification",
-        default=(ZERO_ADDRESS, b"encrypted_swap_id")
+        default=(-1, ZERO_ADDRESS, '')
     )
 
 class FinalizeSwap(bt.Synapse):

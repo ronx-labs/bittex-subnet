@@ -85,7 +85,14 @@ class Validator(BaseValidatorNeuron):
             deserialize=True
         )
 
+        swap_id = bytes.fromhex(query.swap_id[2:])
+
         for response in responses:
+            # Store the responses to use in the reward function.
+            if swap_id not in self.swaps:
+                self.swaps[swap_id] = [response.output]
+            else:
+                self.swaps[swap_id].append(response.output)
             # Log the responses for monitoring purposes.
             bt.logging.info(f"response: {response}")
 

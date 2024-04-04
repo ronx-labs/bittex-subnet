@@ -21,6 +21,7 @@ import time
 import typing
 import bittensor as bt
 import os
+import base64
 
 from dotenv import load_dotenv
 
@@ -66,34 +67,37 @@ class Miner(BaseMinerNeuron):
         Returns:
             template.protocol.SwapNotification: The synapse object with the 'output' field which contains the public address and encrypted message.
         """
-        
-        swap_id = synapse.swap_id
-        bnb_test_chain = chains['bnb_test']
+        chain = chains[synapse.chain_name]
+        swap_id = bytes.fromhex(synapse.swap_id[2:])
         
         # Get the token information from the swap
-        input_token_address = bnb_test_chain.web3.to_checksum_address(bnb_test_chain.get_swap(swap_id).input_token_address)
-        output_token_address = bnb_test_chain.web3.to_checksum_address(bnb_test_chain.get_swap(swap_id).output_token_address)
-        amount = bnb_test_chain.get_swap(swap_id).amount
+        input_token_address = chain.web3.to_checksum_address(chain.get_swap(swap_id).input_token_address)
+        output_token_address = chain.web3.to_checksum_address(chain.get_swap(swap_id).output_token_address)
+        amount = chain.get_swap(swap_id).amount
         
         # Adjust the bid amount
-        if self.config.custom.utils:
-            bid_amount = self.utils.adjust_bid_amount(input_token_address, output_token_address, amount, bnb_test_chain.rpc_url)
-        else:
-            bid_amount = 1
+        bid_amount = adjust_bid_amount(input_token_address, output_token_address, amount, chain.rpc_url)
+        bt.logging.info(f"Bid amount: {bid_amount}")
                 
         # Make a bid on the swap
         try:
-            bnb_test_chain.make_bid(swap_id, bid_amount, self.env_wallet["address"], self.env_wallet["private_key"])
+            bt.logging.info("Making bid...")
+            chain.make_bid(swap_id, bid_amount, chain.web3.to_checksum_address(self.env_wallet["address"]), self.env_wallet["private_key"])
+            bt.logging.info("Bid made successfully.")
+            bt.logging.info(chain.get_bid_amount(swap_id, chain.web3.to_checksum_address(self.env_wallet["address"])))
         except Exception as e:
-            bt.logging.error(f"Error making bid: {e}. Failed to make a bid on swap {swap_id}.")
+            bt.logging.error(f"Error making bid: {e}. Failed to make a bid on swap {chain.web3.to_hex(swap_id)}.")
             return synapse
         
-        # Encrypt the swap_id with the miner's private key
-        encrypted_swap_id = bnb_test_chain.sign_message(str(swap_id), bytes.fromhex(self.env_wallet["private_key"]))
-        
-        # Set the output fields of the synapse
-        synapse.output = self.env_wallet["address"], encrypted_swap_id
-        
+        try:
+            # Encrypt the swap_id with the miner's private key
+            encrypted_swap_id = chain.sign_message(chain.web3.to_hex(swap_id), bytes.fromhex(self.env_wallet["private_key"]))
+
+            # Set the output fields of the synapse
+            synapse.output = self.uid, self.env_wallet["address"], base64.b64encode(encrypted_swap_id).decode('utf-8')
+        except Exception as e:
+            bt.logging.error(f"Error encrypting swap_id: {e}. Failed to encrypt swap_id {chain.web3.to_hex(swap_id)}.")
+            
         return synapse
 
     async def blacklist(

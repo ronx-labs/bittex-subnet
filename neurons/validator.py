@@ -48,7 +48,7 @@ class Validator(BaseValidatorNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(self, query: SwapRequest):
+    async def forward(self):
         """
         Validator forward pass. Consists of:
         - Generating the query
@@ -58,9 +58,9 @@ class Validator(BaseValidatorNeuron):
         - Updating the scores
         """
         # TODO(developer): Rewrite this function based on your protocol definition.
-        return await forward(self, query)
+        return await forward(self)
 
-    async def swap_request(self, query: SwapRequest):
+    async def swap_request(self, query: SwapRequest) -> SwapRequest:
         """
         The swap_request function is called by the validator every time swap requests are received.
         It sends the swap notification to the miners 
@@ -79,15 +79,26 @@ class Validator(BaseValidatorNeuron):
             # Send the query to selected miner axons in the network.
             axons=[self.metagraph.axons[uid] for uid in miner_uids],
             # Construct a query based on swapId.
-            synapse=SwapNotification(swap_id=query.swap_id),
+            synapse=SwapNotification(chain_name=query.chain_name, swap_id=query.swap_id),
             # All responses have the deserialize function called on them before returning.
             # You are encouraged to define your own deserialization function.
             deserialize=True
         )
 
+        swap_id = bytes.fromhex(query.swap_id[2:])
+        self.swap_id_chain[swap_id] = query.chain_name
+
         for response in responses:
+            # Store the responses to use in the reward function.
+            if swap_id not in self.swaps:
+                self.swaps[swap_id] = [response.output]
+            else:
+                self.swaps[swap_id].append(response.output)
             # Log the responses for monitoring purposes.
             bt.logging.info(f"response: {response}")
+
+        query.output = True           
+        return query
 
     async def blacklist(
         self, synapse: exchangenet.protocol.SwapRequest

@@ -58,7 +58,7 @@ class EvmChain:
     def sign_message(self, message: str, private_key: bytes) -> bytes:
         signable_msg = encode_defunct(text=message)
         signed_message = self.web3.eth.account.sign_message(signable_msg, private_key)
-        return signed_message.signature.hex()
+        return signed_message.signature
 
     def verify_signature(self, message: str, signature: bytes, public_address: bytes) -> bool:
         signable_msg = encode_defunct(text=message)

@@ -43,7 +43,8 @@ async def forward(self):
 
     for swap_id in self.swaps.copy():
         bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
-        if chains['bnb_test'].is_finalized(swap_id) or chains['bnb_test'].is_expired(swap_id):
+        chain = chains[self.swap_id_chain[swap_id]]
+        if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
             # Get swap info from the swap_id and remove it from the swaps dictionary.
             sign_info_list = self.swaps.pop(swap_id)
             

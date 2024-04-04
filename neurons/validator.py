@@ -48,7 +48,7 @@ class Validator(BaseValidatorNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(self, query: SwapRequest):
+    async def forward(self):
         """
         Validator forward pass. Consists of:
         - Generating the query
@@ -58,9 +58,9 @@ class Validator(BaseValidatorNeuron):
         - Updating the scores
         """
         # TODO(developer): Rewrite this function based on your protocol definition.
-        return await forward(self, query)
+        return await forward(self)
 
-    async def swap_request(self, query: SwapRequest):
+    async def swap_request(self, query: SwapRequest) -> SwapRequest:
         """
         The swap_request function is called by the validator every time swap requests are received.
         It sends the swap notification to the miners 
@@ -95,6 +95,9 @@ class Validator(BaseValidatorNeuron):
                 self.swaps[swap_id].append(response.output)
             # Log the responses for monitoring purposes.
             bt.logging.info(f"response: {response}")
+
+        query.output = True           
+        return query
 
     async def blacklist(
         self, synapse: exchangenet.protocol.SwapRequest

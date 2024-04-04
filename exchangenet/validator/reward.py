@@ -18,9 +18,11 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
-from typing import List, Tuple
-
 import bittensor as bt
+import base64
+import os
+
+from typing import List, Tuple
 
 from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.shared.blockchain.chains import chains
@@ -58,29 +60,32 @@ def set_weights(self, deposit_info: dict):
     return self.weights
 
 
-def reward(self, query: SwapRequest, response: Tuple) -> float:
-    # Get swap_id and account_address from the query and response
-    swap_id = query.swap_id
-    account_address = response[0]
-    encrypted_swap_id = response[1]
+def reward(self, swap_id: bytes, info: Tuple[int, str, str]) -> float:
+    # Get account_address and encrypted_swap_id rom the query and response
+    account_address = info[1]
+    encrypted_swap_id = info[2]
+    encrypted_swap_id = base64.b64decode(encrypted_swap_id)
 
     # Verify the account address
-    bnb_test_chain = chains['bnb_test']
-    is_verified = bnb_test_chain.verify_signature(str(swap_id), encrypted_swap_id, bytes.fromhex(account_address[2:]))
+    chain_name = self.swap_id_chain[swap_id]
+    chain = chains[chain_name]
+    is_verified = chain.verify_signature(chain.web3.to_hex(swap_id), encrypted_swap_id, bytes.fromhex(account_address[2:]))
 
     if not is_verified:
         return 0.0
 
     # Get the bid amount and winner of the swap
-    bid_amount = bnb_test_chain.get_bid_amount(swap_id, account_address)
-    winner = bnb_test_chain.get_winner(swap_id)
+    bid_amount = chain.get_bid_amount(swap_id, account_address)
+    winner = chain.get_winner(swap_id)
+    
+    bt.logging.info(f"Winner: {winner}")
 
-    return bid_amount * self.config.neuron.winner_score_rate if account_address == winner else bid_amount
+    return bid_amount * self.config.neuron.winner_reward_rate if account_address == winner else bid_amount
 
 def get_rewards(
     self,
-    query: SwapRequest,
-    responses: List[SwapNotification],
+    swap_id: bytes,
+    sign_info_list: List[Tuple[int, str, str]]
 ) -> torch.FloatTensor:
     """
     Returns a tensor of rewards for the given query and responses.
@@ -94,5 +99,5 @@ def get_rewards(
     """
     # Get all the reward results by iteratively calling your reward() function.
     return torch.FloatTensor(
-        [reward(self, query, response) for response in responses]
+        [reward(self, swap_id, sign_info) for sign_info in sign_info_list if sign_info[0] >= 0]
     ).to(self.device)

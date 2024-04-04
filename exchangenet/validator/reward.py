@@ -58,11 +58,11 @@ def set_weights(self, deposit_info: dict):
     return self.weights
 
 
-def reward(self, query: SwapRequest, response: Tuple) -> float:
-    # Get swap_id and account_address from the query and response
-    swap_id = query.swap_id
-    account_address = response[0]
-    encrypted_swap_id = response[1]
+def reward(self, swap_id: bytes, info: Tuple[int, str, str]) -> float:
+    # Get account_address and encrypted_swap_id rom the query and response
+    account_address = info[1]
+    encrypted_swap_id = info[2]
+    encrypted_swap_id = base64.b64decode(encrypted_swap_id)
 
     # Verify the account address
     chain = chains[os.getenv("NETWORK_MODE")]

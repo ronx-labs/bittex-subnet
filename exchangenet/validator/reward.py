@@ -18,9 +18,11 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
-from typing import List, Tuple
-
 import bittensor as bt
+import base64
+import os
+
+from typing import List, Tuple
 
 from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.shared.blockchain.chains import chains
@@ -72,10 +74,12 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str]) -> float:
         return 0.0
 
     # Get the bid amount and winner of the swap
-    bid_amount = bnb_test_chain.get_bid_amount(swap_id, account_address)
-    winner = bnb_test_chain.get_winner(swap_id)
+    bid_amount = chain.get_bid_amount(swap_id, account_address)
+    winner = chain.get_winner(swap_id)
+    
+    bt.logging.info(f"Winner: {winner}")
 
-    return bid_amount * self.config.neuron.winner_score_rate if account_address == winner else bid_amount
+    return bid_amount * self.config.neuron.winner_reward_rate if account_address == winner else bid_amount
 
 def get_rewards(
     self,

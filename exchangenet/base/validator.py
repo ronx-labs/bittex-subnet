@@ -25,7 +25,7 @@ import argparse
 import threading
 import bittensor as bt
 
-from typing import List
+from typing import List, Tuple, Dict
 from traceback import print_exception
 
 from exchangenet.base.neuron import BaseNeuron
@@ -49,8 +49,11 @@ class BaseValidatorNeuron(BaseNeuron):
         # Save a copy of the hotkeys to local memory.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         
-        # Save the swap ids to local memory.
-        self.swap_ids = []
+        # Save the swap information to local memory.
+        self.swaps: Dict[bytes, List[Tuple[int, str, str]]] = {}
+        
+        # Set the expiry time for the swap.
+        self.expiry_time = 60 * 5
 
         # Dendrite lets us send messages to other nodes (axons) in the network.
         if self.config.mock:
@@ -382,6 +385,3 @@ class BaseValidatorNeuron(BaseNeuron):
         self.step = state["step"]
         self.scores = state["scores"]
         self.hotkeys = state["hotkeys"]
-        
-        # Set the expiry time for the swap.
-        self.expiry_time = 60 * 5

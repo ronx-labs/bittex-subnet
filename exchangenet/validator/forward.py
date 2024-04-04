@@ -53,8 +53,7 @@ async def forward(self):
             # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
             self.update_scores(rewards, miner_uids)
             
-            # Remove the swap_id from the list of active swap_ids
-            self.swap_ids.remove(swap_id)
+    time.sleep(5)
 
     forward_time = time.time() - start_time
     bt.logging.info(f"Forward time: {forward_time:.2f}s")

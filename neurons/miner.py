@@ -85,9 +85,9 @@ class Miner(BaseMinerNeuron):
             return synapse
         
         # Encrypt the swap_id with the miner's private key
-        encrypted_swap_id = bnb_test_chain.sign_message(str(swap_id), bytes.fromhex(self.env_wallet["private_key"]))
-        
-        # Set the output fields of the synapse
+            encrypted_swap_id = chain.sign_message(chain.web3.to_hex(swap_id), bytes.fromhex(self.env_wallet["private_key"]))
+
+            # Set the output fields of the synapse
         synapse.output = self.env_wallet["address"], encrypted_swap_id
         
         return synapse

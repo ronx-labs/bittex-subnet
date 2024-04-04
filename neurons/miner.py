@@ -66,8 +66,8 @@ class Miner(BaseMinerNeuron):
         Returns:
             template.protocol.SwapNotification: The synapse object with the 'output' field which contains the public address and encrypted message.
         """
+        chain = chains[synapse.chain_name]
         swap_id = bytes.fromhex(synapse.swap_id[2:])
-        chain = chains[os.getenv("NETWORK_MODE")]
         
         # Get the token information from the swap
         input_token_address = chain.web3.to_checksum_address(chain.get_swap(swap_id).input_token_address)

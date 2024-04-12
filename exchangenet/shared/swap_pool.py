@@ -6,8 +6,8 @@ class SwapPool():
     SwapPool is a simple redis based key value store for storing swap_id's.
     """
 
-    def __init__(self, host: str = 'localhost', port: int = 6379, db: int = 0):
-        self.redis = aioredis.Redis(host=host, port=port, db=db)
+    def __init__(self, host: str = 'localhost', port: int = 6379, db: int = 0, password: str = None):
+        self.redis = aioredis.Redis(host=host, port=port, db=db, password=password)
 
     async def store(self, key: str, value):
         serialized_data = json.dumps(value) # Serialize the data before storing it.

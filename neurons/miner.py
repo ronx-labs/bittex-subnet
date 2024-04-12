@@ -69,7 +69,7 @@ class Miner(BaseMinerNeuron):
         chain = chains[synapse.chain_name]
         swap_id = bytes.fromhex(synapse.swap_id[2:])
 
-        self.database.set(synapse.swap_id, "Pending") # Store the swap_id in the database
+        await self.swap_pool.store(synapse.swap_id, "Pending") # Store the swap_id in the database
         
         # Get the token information from the swap
         input_token_address = chain.web3.to_checksum_address(chain.get_swap(swap_id).input_token_address)
@@ -99,7 +99,7 @@ class Miner(BaseMinerNeuron):
         except Exception as e:
             bt.logging.error(f"Error encrypting swap_id: {e}. Failed to encrypt swap_id {chain.web3.to_hex(swap_id)}.")
 
-        self.database.set(synapse.swap_id, "Completed") # Mark the swap as completed
+        await self.swap_pool.store(synapse.swap_id, "Completed") # Mark the swap as completed
             
         return synapse
 

@@ -42,12 +42,13 @@ async def forward(self):
     # Log the results for monitoring purposes.
     # bt.logging.info(f"Received responses: {responses}")
 
-    async for swap_id in self.database.retrieve_all_swaps():
+    swaps = await self.swap_pool.retrieve_all_swaps()
+    async for swap_id in swaps:
         bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
         chain = chains[self.swap_id_chain[swap_id]]
         if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
             # Get swap info from swap_id.
-            sign_info_list = self.database.retrieve(swap_id)
+            sign_info_list = await self.swap_pool.retrieve(swap_id)
             
             # Adjust the scores based on responses from miners.
             rewards = get_rewards(self, swap_id, sign_info_list)
@@ -58,7 +59,7 @@ async def forward(self):
             self.update_scores(rewards, uids)
 
             # Delete the swap from the database.
-            self.database.delete(swap_id)
+            await self.swap_pool.delete(swap_id)
     
     time.sleep(5)
 

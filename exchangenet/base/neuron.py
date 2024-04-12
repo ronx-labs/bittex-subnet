@@ -71,7 +71,7 @@ class BaseNeuron(ABC):
         self.device = self.config.neuron.device
 
         # Set up redis cache as a database to store `swap_id`s.
-        self.database = SwapPool(host=self.config.database.host, port=self.config.database.port, db=self.config.database.index)
+        self.swap_pool = SwapPool(host=self.config.redis.host, port=self.config.redis.port, db=self.config.redis.index, password=self.config.redis.password)
 
         # Log the configuration for reference.
         bt.logging.info(self.config)

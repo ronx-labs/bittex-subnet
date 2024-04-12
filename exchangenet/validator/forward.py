@@ -42,7 +42,7 @@ async def forward(self):
     # Log the results for monitoring purposes.
     # bt.logging.info(f"Received responses: {responses}")
 
-    async for swap_id in self.database.scan_iter("*"):
+    async for swap_id in self.database.retrieve_all_swaps():
         bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
         chain = chains[self.swap_id_chain[swap_id]]
         if chain.is_finalized(swap_id) or chain.is_expired(swap_id):

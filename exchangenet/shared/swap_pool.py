@@ -23,11 +23,7 @@ class SwapPool():
 
     async def retrieve_all_swaps(self):
         keys = await self.redis.keys('*')
-        data = []
-        for key in keys:
-            serialized_data = await self.redis.get(key)
-            data.append(json.loads(serialized_data))
-        return data
+        return keys
 
     async def delete(self, key: str):
         await self.redis.delete(key)

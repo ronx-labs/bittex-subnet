@@ -91,8 +91,7 @@ class Validator(BaseValidatorNeuron):
 
         for response in responses:
             # Store the responses to use in the reward function.
-            serialized_data = json.dumps(response.output)
-            self.database.set(swap_id, serialized_data)
+            self.database.store(swap_id, response.output)
             # Log the responses for monitoring purposes.
             bt.logging.info(f"response: {response}")
 

@@ -47,8 +47,7 @@ async def forward(self):
         chain = chains[self.swap_id_chain[swap_id]]
         if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
             # Get swap info from swap_id.
-            serialized_data = self.database.get(swap_id)
-            sign_info_list = json.loads(serialized_data)
+            sign_info_list = self.database.retrieve(swap_id)
             
             # Adjust the scores based on responses from miners.
             rewards = get_rewards(self, swap_id, sign_info_list)

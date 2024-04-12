@@ -19,6 +19,7 @@ import copy
 import typing
 
 import bittensor as bt
+from redis import asyncio as aioredis
 
 from abc import ABC, abstractmethod
 
@@ -68,6 +69,9 @@ class BaseNeuron(ABC):
 
         # If a gpu is required, set the device to cuda:N (e.g. cuda:0)
         self.device = self.config.neuron.device
+
+        # Set up redis cache as a database to store `swap_id`s.
+        self.database = aioredis.Redis()
 
         # Log the configuration for reference.
         bt.logging.info(self.config)

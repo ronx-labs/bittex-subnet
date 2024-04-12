@@ -1,6 +1,7 @@
 from web3 import Web3
 from eth_account.messages import encode_defunct
 
+from collections import deque
 from typing import Optional, List, Dict
 from pydantic import BaseModel
 
@@ -34,6 +35,7 @@ class EvmChain:
         self.bittex_abi = bittex_abi
         self.available_tokens = available_tokens
         self.is_testnet = is_testnet
+        self.nonce_queues = {}
         
         self.web3 = Web3(Web3.HTTPProvider(rpc_url))
         
@@ -76,22 +78,47 @@ class EvmChain:
         txn_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
         return txn_receipt
 
+    def ensure_safe_nonce(self, account_address: str, nonce: int) -> int:
+        if account_address not in self.nonce_queues:
+            self.nonce_queues[account_address] = deque()
+
+        if self.nonce_queues[account_address]:
+            last_nonce = self.nonce_queues[account_address][-1]
+            if last_nonce >= nonce:
+                nonce = last_nonce + 1
+
+        self.nonce_queues[account_address].append(nonce)
+        return nonce
+        
+    def remove_used_nonce(self, account_address: str, nonce: int) -> None:
+        if nonce in self.nonce_queues[account_address]:
+            self.nonce_queues[account_address].remove(nonce)
+
     def approve(self, token_address: str, owner_address: str, spender_address: str, token_amount: int, owner_private_key: str) -> None:
+        token_contract = self.web3.eth.contract(address=token_address, abi=ERC20_ABI)
+        
         # Fetch the current recommended gas price from the network
         current_gas_price = self.web3.eth.gas_price
         
-        # Approve the token transfer
-        token_contract = self.web3.eth.contract(address=token_address, abi=ERC20_ABI)
+        # Fetch the current nonce for the account
         nonce = self.web3.eth.get_transaction_count(owner_address)
+        
+        # Ensure to use safe nonce for the transaction
+        nonce = self.ensure_safe_nonce(owner_address, nonce)
+        
+        # Build transaction
         transaction = token_contract.functions.approve(self.web3.to_checksum_address(spender_address), token_amount).build_transaction({
             'chainId': self.chain_id,
             'gas': 200000,
             'gasPrice': current_gas_price,
             'nonce': nonce
         })
-        
+      
         # Sign and send transaction
         self.send_transaction(transaction, owner_private_key)
+        
+        # Remove nonce used for the transaction from queue
+        self.remove_used_nonce(owner_address, nonce)
 
     def create_swap(self, input_token_address: str, output_token_address: str, amount: int, account_address: str, private_key: str) -> bytes:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
@@ -99,8 +126,13 @@ class EvmChain:
         # Fetch the current recommended gas price from the network
         current_gas_price = self.web3.eth.gas_price
         
-        # Build transaction
+        # Fetch the current nonce for the account
         nonce = self.web3.eth.get_transaction_count(account_address)
+        
+        # Ensure to use safe nonce for the transaction
+        nonce = self.ensure_safe_nonce(account_address, nonce)
+        
+        # Build transaction
         transaction = bittex_contract.functions.createSwap(self.web3.to_checksum_address(input_token_address), self.web3.to_checksum_address(output_token_address), amount).build_transaction({
             'chainId': self.chain_id,
             'gas': 2000000,
@@ -110,7 +142,10 @@ class EvmChain:
 
         # Sign and send transaction
         txn_receipt = self.send_transaction(transaction, private_key)
-        
+
+        # Remove nonce used for the transaction from queue
+        self.remove_used_nonce(account_address, nonce)
+
         # Assuming the event name is 'SwapCreated' and it emits the bytes32 value
         event = bittex_contract.events.SwapCreated().process_receipt(txn_receipt)
         swap_id = event[0].args.swapId
@@ -133,15 +168,20 @@ class EvmChain:
     def make_bid(self, swap_id: bytes, amount: int, account_address: str, private_key: str) -> None:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
         
-        # Fetch the current recommended gas price from the network
-        current_gas_price = self.web3.eth.gas_price
-        
         # Approve the token transfer before making a bid
         token_address = self.get_swap(swap_id).output_token_address
         self.approve(token_address, account_address, self.bittex_contract_address, amount, private_key)
 
-        # Build transaction
+        # Fetch the current recommended gas price from the network
+        current_gas_price = self.web3.eth.gas_price
+        
+        # Fetch the current nonce for the account
         nonce = self.web3.eth.get_transaction_count(account_address)
+        
+        # Ensure to use safe nonce for the transaction
+        nonce = self.ensure_safe_nonce(account_address, nonce)
+        
+        # Build transaction
         transaction = bittex_contract.functions.makeBid(swap_id, amount).build_transaction({
             'chainId': self.chain_id,
             'gas': 2000000,
@@ -152,11 +192,11 @@ class EvmChain:
         # Sign and send transaction
         self.send_transaction(transaction, private_key)
 
+        # Remove nonce used for the transaction from queue
+        self.remove_used_nonce(account_address, nonce)
+
     def finalize_swap(self, swap_id: bytes, account_address: str, private_key: str) -> None:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
-        
-        # Fetch the current recommended gas price from the network
-        current_gas_price = self.web3.eth.gas_price
         
         # Approve the token transfer before making a bid
         swap = self.get_swap(swap_id)
@@ -164,8 +204,16 @@ class EvmChain:
         token_amount = swap.amount
         self.approve(token_address, account_address, self.bittex_contract_address, token_amount, private_key)
         
-        # Build transaction
+        # Fetch the current recommended gas price from the network
+        current_gas_price = self.web3.eth.gas_price
+        
+        # Fetch the current nonce for the account
         nonce = self.web3.eth.get_transaction_count(account_address)
+        
+        # Ensure to use safe nonce for the transaction
+        nonce = self.ensure_safe_nonce(account_address, nonce)
+        
+        # Build transaction
         transaction = bittex_contract.functions.finalizeSwap(swap_id).build_transaction({
             'chainId': self.chain_id,
             'gas': 2000000,
@@ -175,6 +223,9 @@ class EvmChain:
 
         # Sign and send transaction
         self.send_transaction(transaction, private_key)
+
+        # Remove nonce used for the transaction from queue
+        self.remove_used_nonce(account_address, nonce)
 
     def is_finalized(self, swap_id: bytes) -> bool:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
@@ -191,9 +242,14 @@ class EvmChain:
 
         # Fetch the current recommended gas price from the network
         current_gas_price = self.web3.eth.gas_price
-      
-        # Build transaction
+        
+        # Fetch the current nonce for the account
         nonce = self.web3.eth.get_transaction_count(account_address)
+        
+        # Ensure to use safe nonce for the transaction
+        nonce = self.ensure_safe_nonce(account_address, nonce)
+
+        # Build transaction        
         transaction = bittex_contract.functions.withdrawBid(swap_id).build_transaction({
             'chainId': self.chain_id,
             'gas': 2000000,
@@ -203,7 +259,10 @@ class EvmChain:
 
         # Sign and send transaction
         self.send_transaction(transaction, private_key)
-
+        
+        # Remove nonce used for the transaction from queue
+        self.remove_used_nonce(account_address, nonce)
+        
     def get_bid_amount(self, swap_id: bytes, account_address: str) -> int:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
         bid_amount = bittex_contract.functions.getBidInfo(swap_id, self.web3.to_checksum_address(account_address)).call()

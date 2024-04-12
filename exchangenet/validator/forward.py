@@ -19,6 +19,7 @@
 
 import bittensor as bt
 import time
+import json
 
 from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.validator.reward import get_rewards
@@ -41,12 +42,13 @@ async def forward(self):
     # Log the results for monitoring purposes.
     # bt.logging.info(f"Received responses: {responses}")
 
-    for swap_id in self.swaps.copy():
+    swaps = await self.swap_pool.retrieve_all_swaps()
+    async for swap_id in swaps:
         bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
         chain = chains[self.swap_id_chain[swap_id]]
         if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
-            # Get swap info from the swap_id and remove it from the swaps dictionary.
-            sign_info_list = self.swaps.pop(swap_id)
+            # Get swap info from swap_id.
+            sign_info_list = await self.swap_pool.retrieve(swap_id)
             
             # Adjust the scores based on responses from miners.
             rewards = get_rewards(self, swap_id, sign_info_list)
@@ -55,6 +57,9 @@ async def forward(self):
             # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
             uids = [sign_info[0] for sign_info in sign_info_list if sign_info[0] >= 0]
             self.update_scores(rewards, uids)
+
+            # Delete the swap from the database.
+            await self.swap_pool.delete(swap_id)
     
     time.sleep(5)
 

@@ -19,7 +19,7 @@ import copy
 import typing
 
 import bittensor as bt
-from redis import asyncio as aioredis
+from exchangenet.shared.swap_pool import SwapPool
 
 from abc import ABC, abstractmethod
 
@@ -71,7 +71,7 @@ class BaseNeuron(ABC):
         self.device = self.config.neuron.device
 
         # Set up redis cache as a database to store `swap_id`s.
-        self.database = aioredis.Redis()
+        self.database = SwapPool(host=self.config.database.host, port=self.config.database.port, db=self.config.database.index)
 
         # Log the configuration for reference.
         bt.logging.info(self.config)

@@ -98,6 +98,45 @@ def add_args(cls, parser):
         default=False,
     )
 
+    # Redis arguments
+    parser.add_argument(
+        "--database.host", default="localhost", help="The host of the redis database."
+    )
+
+    parser.add_argument(
+        "--database.port",
+        type=int,
+        default=6379,
+        help="The port of the redis database.",
+    )
+
+    parser.add_argument(
+        "--database.index",
+        type=int,
+        default=0,
+        help="The index of the redis database.",
+    )
+
+    parser.add_argument(
+        "--database.directory",
+        default="~/.data",
+        help="The directory to store data in.",
+    )
+
+    parser.add_argument(
+        "--database.redis_password",
+        type=str,
+        default=None,
+        help="The redis password.",
+    )
+
+    parser.add_argument(
+        "--database.redis_conf_path",
+        type=str,
+        help="Redis configuration path.",
+        default="/etc/redis/redis.conf",
+    )
+
     parser.add_argument(
         "--wandb.off",
         action="store_true",

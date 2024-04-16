@@ -31,6 +31,8 @@ from exchangenet.validator import forward
 from exchangenet.base.validator import BaseValidatorNeuron
 from exchangenet.utils.uids import get_available_uids
 from exchangenet.protocol import SwapRequest, SwapNotification
+from exchangenet.shared.remote_config import ValidatorConfig
+
 
 class Validator(BaseValidatorNeuron):
     """
@@ -43,6 +45,7 @@ class Validator(BaseValidatorNeuron):
 
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
+        self.remote_config = ValidatorConfig().load_and_get_config_values()
 
         bt.logging.info("load_state()")
         self.load_state()
@@ -131,29 +134,11 @@ class Validator(BaseValidatorNeuron):
         Otherwise, allow the request to be processed further.
         """
         # TODO(developer): Define how miners should blacklist requests.
-        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
-        if (
-            not self.config.blacklist.allow_non_registered
-            and synapse.dendrite.hotkey not in self.metagraph.hotkeys
-        ):
-            # Ignore requests from un-registered entities.
-            bt.logging.trace(
-                f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
-            )
+        if synapse.dendrite.hotkey == self.remote_config.app_hotkey:
+            return False, "Hotkey recognized!"
+        else:
             return True, "Unrecognized hotkey"
 
-        if self.config.blacklist.force_validator_permit:
-            # If the config is set to force validator permit, then we should only allow requests from validators.
-            if not self.metagraph.validator_permit[uid]:
-                bt.logging.warning(
-                    f"Blacklisting a request from non-validator hotkey {synapse.dendrite.hotkey}"
-                )
-                return True, "Non-validator hotkey"
-
-        bt.logging.trace(
-            f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
-        )
-        return False, "Hotkey recognized!"
     
     async def priority(self, synapse: exchangenet.protocol.SwapRequest) -> float:
         """
@@ -176,16 +161,13 @@ class Validator(BaseValidatorNeuron):
         - A higher stake results in a higher priority value.
         """
         # TODO(developer): Define how miners should prioritize requests.
-        caller_uid = self.metagraph.hotkeys.index(
-            synapse.dendrite.hotkey
-        )  # Get the caller index.
-        prirority = float(
-            self.metagraph.S[caller_uid]
-        )  # Return the stake as the priority.
+        priority = 1
+        if synapse.dendrite.hotkey == self.remote_config.app_hotkey:
+            priority = 1000
         bt.logging.trace(
-            f"Prioritizing {synapse.dendrite.hotkey} with value: ", prirority
+            f"Prioritizing {synapse.dendrite.hotkey} with value: ", priority
         )
-        return prirority
+        return priority
 
 
 # The main function parses the configuration and runs the validator.

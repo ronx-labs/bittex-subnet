@@ -16,16 +16,17 @@
 # DEALINGS IN THE SOFTWARE.
 
 import copy
-import typing
 
 import bittensor as bt
-from exchangenet.shared.swap_pool import SwapPool
 
 from abc import ABC, abstractmethod
 
 # Sync calls set weights and also resyncs the metagraph.
 from exchangenet.utils.config import check_config, add_args, config
 from exchangenet.utils.misc import ttl_get_block
+from exchangenet.shared.swap_pool import SwapPool
+from exchangenet.shared.stats import Stats
+
 from exchangenet import __spec_version__ as spec_version
 from exchangenet.mock import MockSubtensor, MockMetagraph
 
@@ -72,6 +73,7 @@ class BaseNeuron(ABC):
 
         # Set up redis cache as a database to store `swap_id`s.
         self.swap_pool = SwapPool(host=self.config.redis.host, port=self.config.redis.port, db=self.config.redis.index, password=self.config.redis.password)
+        self.stats = Stats(host=self.config.redis.host, port=self.config.redis.port, db=self.config.redis.index, password=self.config.redis.password)
 
         # Log the configuration for reference.
         bt.logging.info(self.config)

@@ -3,7 +3,9 @@ import json
 
 class SwapPool():
     """
-    SwapPool is a simple redis based key value store for storing swap_id's.
+    The SwapPool class provides functionality for both miners and validators to store `swap_id`s. 
+
+    As a default, it uses Redis as a backend for storage and provides methods for storing, retrieving, and managing data.
     """
 
     def __init__(self, host: str = 'localhost', port: int = 6379, db: int = 0, password: str = None):

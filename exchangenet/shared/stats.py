@@ -1,14 +1,12 @@
 from redis import asyncio as aioredis
 import json
 
-class SwapPool():
+class Stats():
     """
-    The SwapPool class provides functionality for both miners and validators to store `swap_id`s. 
-
-    As a default, it uses Redis as a backend for storage and provides methods for storing, retrieving, and managing data.
+    Stats is a simple redis based key value store for storing stats.
     """
 
-    def __init__(self, host: str = 'localhost', port: int = 6379, db: int = 0, password: str = None):
+    def __init__(self, host: str = 'localhost', port: int = 6379, db: int = 1, password: str = None):
         self.redis = aioredis.Redis(host=host, port=port, db=db, password=password)
 
     async def store(self, key: str, value):
@@ -23,7 +21,7 @@ class SwapPool():
         else:
             return None
 
-    async def retrieve_all_swaps(self):
+    async def retrieve_all_stats(self):
         keys = await self.redis.keys('*')
         return keys
 

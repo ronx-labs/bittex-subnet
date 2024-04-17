@@ -142,6 +142,10 @@ class BaseMinerNeuron(BaseNeuron):
         except Exception as e:
             bt.logging.error(traceback.format_exc())
 
+    async def concurrent_forward(self):
+        coroutines = [ self.withdraw() ]
+        await asyncio.gather(*coroutines)
+
     def run_in_background_thread(self):
         """
         Starts the miner's operations in a separate background thread.

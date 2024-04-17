@@ -23,8 +23,8 @@ class SwapPool():
         else:
             return None
 
-    async def retrieve_all_swaps(self):
-        keys = await self.redis.keys('*')
+    async def retrieve_all_swaps(self, pattern: str = '*'):
+        keys = await self.redis.keys(pattern)
         return keys
 
     async def delete(self, key: str):

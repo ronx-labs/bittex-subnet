@@ -94,7 +94,7 @@ class Validator(BaseValidatorNeuron):
 
         for response in responses:
             # Store the responses to use in the reward function.
-            await self.swap_pool.store(swap_id, response.output)
+            self.loop.run_until_complete(self.swap_pool.store(swap_id, response.output))
             # Log the responses for monitoring purposes.
             bt.logging.info(f"response: {response}")
 

@@ -39,11 +39,10 @@ async def forward(self):
     # Log the start time for monitoring purposes.
     start_time = time.time()
 
-    # Log the results for monitoring purposes.
-    # bt.logging.info(f"Received responses: {responses}")
+    # Retrieve all the swap_ids from the swap pool.
+    swaps = self.loop.run_until_complete(self.swap_pool.retrieve_all_swaps('0x*'))
 
-    swaps = await self.swap_pool.retrieve_all_swaps()
-    async for swap_id in swaps:
+    for swap_id in swaps:
         bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
         chain = chains[self.swap_id_chain[swap_id]]
         if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
@@ -58,10 +57,10 @@ async def forward(self):
             uids = [sign_info[0] for sign_info in sign_info_list if sign_info[0] >= 0]
             self.update_scores(rewards, uids)
 
-            # Delete the swap from the database.
+            # Delete the swap_id from the swap pool.
             await self.swap_pool.delete(swap_id)
     
-    time.sleep(5)
+    time.sleep(20)
 
     forward_time = time.time() - start_time
     bt.logging.info(f"Forward time: {forward_time:.2f}s")

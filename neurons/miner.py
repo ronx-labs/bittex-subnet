@@ -51,6 +51,40 @@ class Miner(BaseMinerNeuron):
             "private_key": os.getenv("EVM_WALLET_PRIVATE_KEY")
         }
 
+    async def withdraw(self):
+        """
+        The withdraw function is called by the miner every time step.
+
+        It enables miners withdraw their bids from finalized or expired swaps.
+
+        Args:
+            self (:obj:`bittensor.neuron.Neuron`): The neuron object which contains all the necessary state for the miner.
+
+        """
+        swap_ids = self.loop.run_until_complete(self.swap_pool.retrieve_all_swaps('0x*'))
+        
+        try:
+            for swap_id in swap_ids:
+                swap = await self.swap_pool.retrieve(swap_id)
+                if type(swap) == str:
+                    await self.swap_pool.delete(swap_id)
+                    continue
+                if swap["status"] == "Completed" and swap["created_at"] + 60 * 6 < time.time():
+                    try:
+                        bt.logging.info(f"Withdrawing bid from swap {swap_id}.")
+                        chain = chains[swap["chain_name"]]
+                        chain.withdraw_bid(bytes.fromhex(str(swap_id)[4:-1]), chain.web3.to_checksum_address(self.env_wallet["address"]), self.env_wallet["private_key"])
+                        bt.logging.info(f"Withdrew bid from swap {swap_id}. Deleting swap from the database...")
+                        await self.swap_pool.delete(swap_id)
+                        
+                    except Exception as e:
+                        bt.logging.error(f"Failed to withdraw bid from swap {swap_id}. Error: {e}")
+                        continue
+
+        except Exception as e:
+            bt.logging.error(f"Withdrawing couldn't be started: {e}.")
+            time.sleep(1)
+
     async def forward(
         self, synapse: exchangenet.protocol.SwapNotification
     ) -> exchangenet.protocol.SwapNotification:

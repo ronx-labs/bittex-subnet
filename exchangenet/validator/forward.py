@@ -44,6 +44,11 @@ async def forward(self):
 
     for swap_id in swaps:
         bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
+
+        # Check if the swap_id is in the list
+        if swap_id not in self.swap_id_chain:
+            continue
+
         chain = chains[self.swap_id_chain[swap_id]]
         if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
             # Get swap info from swap_id.

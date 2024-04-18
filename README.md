@@ -6,27 +6,21 @@
 
 ## Overview
 
-The idea behind Bittex subnet is to build a DEX providing the most competitive rate in the world, which is powered by Bittensor.
+Welcome to Bittex, a revolutionary decentralized exchange (DEX) powered by Bittensor, designed to offer the most competitive exchange rates globally.
+By leveraging the decentralized and dynamic capabilities of Bittensor, Bittex redefines liquidity provision and currency exchange on the blockchain.
 
-Miners are liquidity providers to the platform. They compete with each other for a better exchange rate to get more incentives.
+At Bittex, we adopt an innovative approach to liquidity provision termed "atomic swaps."
+Unlike traditional DEXs where liquidity providers (LPs) deposit funds into a pool, Bittex requires miners to deposit funds for each swap transaction. This approach significantly reduces the risk of impermanent loss and enhances the efficiency of liquidity provided by our miners.
 
-At its core lies the smart contract which ensures the correct execution of each swap.
+Miners in the Bittex subnet act as liquidity providers, playing a key role in the platform's operations. They participate in a competitive bidding process to fulfill swap requests initiated by users. In each swap, the bids from the top three miners are evaluated, with the best bid executing the swap. Miners are rewarded based on their bid amounts, and the winning miner receives an additional bonus. This structure motivates miners to offer more competitive exchange rates, thereby boosting the overall efficacy of our decentralized exchange.
 
-A swap is "atomic" in the Bittex, which means that liquidity providers deposit their funds for each individual swap transaction instead of to a pool. The "atomic swap" approach reduces the risk of impermanent loss and providing more efficient liquidity provision.
-
-Bittex Subnet aims to be the go-to platform for users looking for the best exchange rates in the DeFi space.
+The primary goal of Bittex is to enhance the user experience by providing exceptional exchange rates and reducing the risks associated with liquidity provision. By integrating directly with the Bittensor network, Bittex benefits from the decentralized, secure, and efficient framework that Bittensor offers, making it a cutting-edge solution in the DeFi space.
 
 ## Architecture
 
-### Introduction to Proof-of-Bid (PoB)
+### Introduction to the Proof of bid
 
-A crucial part of the subnet is to build proper mechanism that ensures not only the correct execution of each swap but also the proof of bid for miners.
-
-We managed to build the PoB by utilizing smart contract. The smart contract stores miners' bid amounts for each swap and ensures the correct execution of each swap.
-
-All transactions and bid information is public and transparent.
-
-Validators evaluate miners' performance based on bdi information from the smart contract.
+Proof of bid (PoB) is an underlying protocol which ensures the correct execution of each swap.
 
 ### PoB explained by sequence diagram
 

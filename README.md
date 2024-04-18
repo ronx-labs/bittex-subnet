@@ -32,17 +32,17 @@ Proof of bid (PoB) is an underlying protocol that makes sure everything on our p
 
 ### Scoring mechanism
 
-Miners are scored by several factors.
+Miners' scores are calculated based on their activity in each swap, with additional consideration for their ongoing and historical performance:
 
-- for each swap (70%)
-  - bid amount
-  - if top 3
-  - if winner
+- Swap-Specific Scoring (85%): For each individual swap, a miner's score is determined by:
+  - The bid amount.
+  - Inclusion in the top three bids.
+  - Being the winning bidder.
 
-- for the past 7 days (20%)
-  - total exchange amount (sum of winning swap bid amounts)
-  - total number of winning swaps
+- Seven-Day Performance (10%): A miner's activity over the last week influences their score through:
+  - The total volume of successful swaps in USD.
+  - The number of swaps won.
 
-- for the lifetime (10%)
-  - total exchange amount (sum of winning swap bid amounts)
-  - total number of winning swaps
+- Overall Contributions (5%): Recognizing the miner's total tenure, this aspect includes:
+  - The total volume of successful swaps in USD.
+  - The number of swaps won.

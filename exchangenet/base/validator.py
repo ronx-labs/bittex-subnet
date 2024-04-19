@@ -49,10 +49,6 @@ class BaseValidatorNeuron(BaseNeuron):
         # Save a copy of the hotkeys to local memory.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         
-        # Save the information needed for sign and verification.
-        # {swap_id: [(uid, signature, pubkey)]}
-        self.swaps: Dict[bytes, List[Tuple[int, str, str]]] = {}
-        
         # Save the chain name per swap id.
         self.swap_id_chain: Dict[bytes, str] = {}
         
@@ -92,6 +88,7 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # Create asyncio event loop to manage async tasks.
         self.loop = asyncio.get_event_loop()
+        # self.loop.run_until_complete(self.storage.delete_name("validator_swap_pool"))
 
         # Instantiate runners
         self.should_exit: bool = False

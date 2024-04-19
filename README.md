@@ -14,7 +14,7 @@ Unlike traditional DEXs where liquidity providers (LPs) deposit funds into a poo
 Miners in the Bittex subnet act as liquidity providers, playing a key role in the platform's operations.
 They participate in a competitive bidding process to fulfill swap requests initiated by users. In each swap, the bids from the top three miners are evaluated, with the best bid executing the swap. Miners are rewarded based on their bid amounts, and the winning miner receives an additional bonus. This structure motivates miners to offer more competitive exchange rates, thereby boosting the overall efficacy of our decentralized exchange.
 
-The primary goal of Bittex is to enhance the user experience by providing exceptional exchange rates and reducing the risks associated with liquidity provision. By integrating directly with the Bittensor network, Bittex benefits from the decentralized, secure, and efficient framework that Bittensor offers, making it a cutting-edge solution in the DeFi space.
+Bittex is committed to enhancing the user experience by offering exceptional exchange rates and minimizing the risks tied to liquidity provision. By integrating seamlessly with the Bittensor network, Bittex not only gains from a decentralized, secure, and efficient framework, but it also pioneers a brand new innovative market in the DeFi space. This strategic integration positions Bittex as a cutting-edge solution within decentralized finance, reshaping how liquidity and currency exchange are managed on the blockchain.
 
 ## Architecture
 

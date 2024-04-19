@@ -63,6 +63,9 @@ class BaseMinerNeuron(BaseNeuron):
         )
         bt.logging.info(f"Axon created: {self.axon}")
 
+        # Create asyncio event loop to manage async tasks.
+        self.loop = asyncio.get_event_loop()
+
         # Instantiate runners
         self.should_exit: bool = False
         self.is_running: bool = False
@@ -117,6 +120,10 @@ class BaseMinerNeuron(BaseNeuron):
                     # Wait before checking again.
                     time.sleep(1)
 
+                    if int(time.time()) % 10 == 0:
+                        bt.logging.info(f"Checking for withdraw...")
+                        self.loop.run_until_complete(self.concurrent_forward())
+
                     # Check if we should exit.
                     if self.should_exit:
                         break
@@ -134,6 +141,10 @@ class BaseMinerNeuron(BaseNeuron):
         # In case of unforeseen errors, the miner will log the error and continue operations.
         except Exception as e:
             bt.logging.error(traceback.format_exc())
+
+    async def concurrent_forward(self):
+        coroutines = [ self.withdraw() ]
+        await asyncio.gather(*coroutines)
 
     def run_in_background_thread(self):
         """

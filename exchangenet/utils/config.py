@@ -98,45 +98,6 @@ def add_args(cls, parser):
         default=False,
     )
 
-    # Redis arguments
-    parser.add_argument(
-        "--redis.host", default="localhost", help="The host of the redis client."
-    )
-
-    parser.add_argument(
-        "--redis.port",
-        type=int,
-        default=6379,
-        help="The port of the redis client.",
-    )
-
-    parser.add_argument(
-        "--redis.index",
-        type=int,
-        default=0,
-        help="The index of the redis client db.",
-    )
-
-    parser.add_argument(
-        "--redis.directory",
-        default="~/.data",
-        help="The directory to store data in.",
-    )
-
-    parser.add_argument(
-        "--redis.password",
-        type=str,
-        default=None,
-        help="The redis password.",
-    )
-
-    parser.add_argument(
-        "--redis.conf_path",
-        type=str,
-        help="Redis configuration path.",
-        default="/etc/redis/redis.conf",
-    )
-
     parser.add_argument(
         "--wandb.off",
         action="store_true",
@@ -181,6 +142,19 @@ def add_miner_args(cls, parser):
         action="store_true",
         help="If set, miners will accept queries from non registered entities. (Dangerous!)",
         default=False,
+    )
+
+    # Add wallet arguments.
+    parser.add_argument(
+        "--wallet.address",
+        type=str,
+        help="Wallet address",
+    )
+
+    parser.add_argument(
+        "--wallet.private_key",
+        type=str,
+        help="Wallet private key",
     )
 
     parser.add_argument(

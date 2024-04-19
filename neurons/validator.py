@@ -89,12 +89,14 @@ class Validator(BaseValidatorNeuron):
             deserialize=True
         )
 
-        swap_id = bytes.fromhex(query.swap_id[2:])
-        self.swap_id_chain[swap_id] = query.chain_name
+        sign_info_list = []
 
         for response in responses:
             # Store the responses to use in the reward function.
-            await self.swap_pool.store(swap_id, response.output)
+            sign_info_list.append(response.output)
+            self.loop.run_until_complete(self.storage.store_data('validator_swap_pool', query.swap_id[2:], query.chain_name))
+            self.loop.run_until_complete(self.storage.store_data(query.swap_id[2:], 'response', json.dumps(sign_info_list)))
+
             # Log the responses for monitoring purposes.
             bt.logging.info(f"response: {response}")
 

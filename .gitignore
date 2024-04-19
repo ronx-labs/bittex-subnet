@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 
 testing/
+exchangenet/shared/validator_config.json
+exchangenet/shared/miner_config.json

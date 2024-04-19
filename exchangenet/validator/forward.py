@@ -21,7 +21,6 @@ import bittensor as bt
 import time
 import json
 
-from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.validator.reward import get_rewards
 from exchangenet.shared.blockchain.chains import chains
 
@@ -40,30 +39,35 @@ async def forward(self):
     start_time = time.time()
 
     # Retrieve all the swap_ids from the swap pool.
-    swaps = self.loop.run_until_complete(self.swap_pool.retrieve_all_swaps('0x*'))
+    swaps = self.loop.run_until_complete(self.storage.get_all_data('validator_swap_pool'))
+    for swap in swaps:
+        try:
+            swap_id = bytes.fromhex(swap)
+            bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
 
-    for swap_id in swaps:
-        bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
+            chain_name = await self.storage.retrieve_data('validator_swap_pool', swap)
+            chain = chains[chain_name]
+            bt.logging.debug(f"Chain: {chain}")
+            if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
+                    # Get swap info from swap_id.
+                    sign_info_list = await self.storage.retrieve_data(swap, 'response')
+                    sign_info_list = json.loads(sign_info_list)
+                    bt.logging.debug(f"Sign info list: {sign_info_list}")
+                    
+                    # Adjust the scores based on responses from miners.
+                    rewards = get_rewards(self, swap_id, sign_info_list)
+                    bt.logging.info(f"Scored responses: {rewards}")
+                    
+                    # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
+                    uids = [sign_info[0] for sign_info in sign_info_list if sign_info[0] >= 0]
+                    self.update_scores(rewards, uids)
 
-        # Check if the swap_id is in the list
-        if swap_id not in self.swap_id_chain:
+                    # Delete the swap_id from the swap pool.
+                    await self.storage.delete_data('validator_swap_pool', swap)
+            
+        except Exception as e:
+            bt.logging.error(f"Error in forward: {e}")
             continue
-
-        chain = chains[self.swap_id_chain[swap_id]]
-        if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
-            # Get swap info from swap_id.
-            sign_info_list = await self.swap_pool.retrieve(swap_id)
-            
-            # Adjust the scores based on responses from miners.
-            rewards = get_rewards(self, swap_id, sign_info_list)
-            bt.logging.info(f"Scored responses: {rewards}")
-            
-            # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-            uids = [sign_info[0] for sign_info in sign_info_list if sign_info[0] >= 0]
-            self.update_scores(rewards, uids)
-
-            # Delete the swap_id from the swap pool.
-            await self.swap_pool.delete(swap_id)
     
     time.sleep(20)
 

@@ -144,6 +144,19 @@ def add_miner_args(cls, parser):
         default=False,
     )
 
+    # Add wallet arguments.
+    parser.add_argument(
+        "--wallet.address",
+        type=str,
+        help="Wallet address",
+    )
+
+    parser.add_argument(
+        "--wallet.private_key",
+        type=str,
+        help="Wallet private key",
+    )
+
     parser.add_argument(
         "--wandb.project_name",
         type=str,

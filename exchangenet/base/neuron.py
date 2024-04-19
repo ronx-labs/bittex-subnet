@@ -24,7 +24,7 @@ from abc import ABC, abstractmethod
 # Sync calls set weights and also resyncs the metagraph.
 from exchangenet.utils.config import check_config, add_args, config
 from exchangenet.utils.misc import ttl_get_block
-from exchangenet.shared.swap_pool import SwapPool
+from exchangenet.shared.storage import Storage
 from exchangenet.shared.stats import Stats
 
 from exchangenet import __spec_version__ as spec_version
@@ -71,9 +71,8 @@ class BaseNeuron(ABC):
         # If a gpu is required, set the device to cuda:N (e.g. cuda:0)
         self.device = self.config.neuron.device
 
-        # Set up redis cache as a database to store `swap_id`s.
-        self.swap_pool = SwapPool(host=self.config.redis.host, port=self.config.redis.port, db=self.config.redis.index, password=self.config.redis.password)
-        self.stats = Stats(host=self.config.redis.host, port=self.config.redis.port, db=self.config.redis.index, password=self.config.redis.password)
+        # Init redis cache
+        self.storage = Storage()
 
         # Log the configuration for reference.
         bt.logging.info(self.config)

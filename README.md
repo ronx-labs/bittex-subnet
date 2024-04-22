@@ -46,3 +46,13 @@ Miners' scores are calculated based on their activity in each swap, with additio
 - Overall Contributions (5%): Recognizing the miner's total tenure, this aspect includes:
   - The total volume of successful swaps in USD.
   - The number of swaps won.
+
+## Links
+
+- **GitHub Repository**: https://github.com/ronnie-samaroo/bittex-subnet/
+- **Website**: https://bittex.xyz/
+- **App**: https://app.bittex.xyz/
+- **X Account**: https://twitter.com/BittexSN/
+- **Discord Server**: https://discord.gg/XdAa7BAN8H
+- **Smart Contract Deployment**: https://bscscan.com/
+- **CertiK Security Profile**: https://certik.com/

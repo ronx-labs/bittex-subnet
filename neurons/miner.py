@@ -172,7 +172,7 @@ class Miner(BaseMinerNeuron):
             
         return synapse
 
-    async def blacklist(
+    async def swap_notification_blacklist(
         self, synapse: exchangenet.protocol.SwapNotification
     ) -> typing.Tuple[bool, str]:
         """
@@ -184,7 +184,7 @@ class Miner(BaseMinerNeuron):
         requests before they are deserialized to avoid wasting resources on requests that will be ignored.
 
         Args:
-            synapse (template.protocol.SwapNotification): A synapse object constructed from the headers of the incoming request.
+            synapse (exchangenet.protocol.SwapNotification): A synapse object constructed from the headers of the incoming request.
 
         Returns:
             Tuple[bool, str]: A tuple containing a boolean indicating whether the synapse's hotkey is blacklisted,
@@ -226,7 +226,7 @@ class Miner(BaseMinerNeuron):
         )
         return False, "Hotkey recognized!"
 
-    async def priority(self, synapse: exchangenet.protocol.SwapNotification) -> float:
+    async def swap_notification_priority(self, synapse: exchangenet.protocol.SwapNotification) -> float:
         """
         The priority function determines the order in which requests are handled. More valuable or higher-priority
         requests are processed before others. You should design your own priority mechanism with care.
@@ -234,7 +234,7 @@ class Miner(BaseMinerNeuron):
         This implementation assigns priority to incoming requests based on the calling entity's stake in the metagraph.
 
         Args:
-            synapse (template.protocol.SwapNotification): The synapse object that contains metadata about the incoming request.
+            synapse (exchangenet.protocol.SwapNotification): The synapse object that contains metadata about the incoming request.
 
         Returns:
             float: A priority score derived from the stake of the calling entity.
@@ -250,6 +250,61 @@ class Miner(BaseMinerNeuron):
         caller_uid = self.metagraph.hotkeys.index(
             synapse.dendrite.hotkey
         )  # Get the caller index.
+        prirority = float(
+            self.metagraph.S[caller_uid]
+        )  # Return the stake as the priority.
+        bt.logging.trace(
+            f"Prioritizing {synapse.dendrite.hotkey} with value: ", prirority
+        )
+        return prirority
+
+    async def discovery_blacklist(
+        self, synapse: exchangenet.protocol.Pricing
+    ) -> typing.Tuple[bool, str]:
+        """
+        Blacklist function for the `Pricing` synapse. This function determines whether an incoming request should be blacklisted and thus ignored.
+
+        Args:
+            synapse (exchangenet.protocol.Pricing): A synapse object constructed from the headers of the incoming request.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating whether the synapse's hotkey is blacklisted,
+                            and a string providing the reason for the decision.
+        """
+        uid = self.metagraph.hotkeys.index( synapse.dendrite.hotkey)
+        if not self.config.blacklist.allow_non_registered and synapse.dendrite.hotkey not in self.metagraph.hotkeys:
+            # Ignore requests from un-registered entities.
+            bt.logging.trace(
+                f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
+            )
+            return True, "Unrecognized hotkey"
+        
+        if self.config.blacklist.force_validator_permit:
+            # If the config is set to force validator permit, then we should only allow requests from validators.
+            if not self.metagraph.validator_permit[uid]:
+                bt.logging.warning(
+                    f"Blacklisting a request from non-validator hotkey {synapse.dendrite.hotkey}"
+                )
+                return True, "Non-validator hotkey"
+
+        bt.logging.trace(
+            f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
+        )
+        return False, "Hotkey recognized!"
+
+    async def discovery_priority(self, synapse: exchangenet.protocol.Pricing) -> float:
+        """
+        Priority function for the `Pricing` synapse. This function determines the order in which requests are handled. More valuable or higher-priority requests are processed before others.
+
+        Args:
+            synapse (exchangenet.protocol.Pricing): The synapse object that contains metadata about the incoming request.
+
+        Returns:
+            float: A priority score derived from the stake of the calling entity.
+        """
+        caller_uid = self.metagraph.hotkeys.index(
+            synapse.dendrite.hotkey
+        ) # Get the caller index.
         prirority = float(
             self.metagraph.S[caller_uid]
         )  # Return the stake as the priority.

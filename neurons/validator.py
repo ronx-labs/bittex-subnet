@@ -20,18 +20,18 @@
 
 import time
 import typing
-import json
 
 # Bittensor
 import bittensor as bt
 
-# Bittensor Validator Template:
 import exchangenet
 from exchangenet.validator import forward
 from exchangenet.base.validator import BaseValidatorNeuron
 from exchangenet.utils.uids import get_available_uids
 from exchangenet.protocol import SwapRequest, SwapNotification
 from exchangenet.shared.remote_config import ValidatorConfig
+from exchangenet.validator.storage import ValidatorStorage
+
 
 
 class Validator(BaseValidatorNeuron):
@@ -49,8 +49,8 @@ class Validator(BaseValidatorNeuron):
 
         bt.logging.info("load_state()")
         self.load_state()
-
-        # TODO(developer): Anything specific to your use case you can do here
+        
+        self.storage = ValidatorStorage()
 
     async def forward(self):
         """
@@ -70,7 +70,7 @@ class Validator(BaseValidatorNeuron):
         It sends the swap notification to the miners 
 
         Args:
-            synapse (template.protocol.SwapRequest): The incoming swap request.
+            synapse (exchangenet.protocol.SwapRequest): The incoming swap request.
         """
             
         # TODO(developer): Define how the validator selects a miner to query, how often, etc.
@@ -94,12 +94,22 @@ class Validator(BaseValidatorNeuron):
         for response in responses:
             # Store the responses to use in the reward function.
             sign_info_list.append(response.output)
-            self.loop.run_until_complete(self.storage.store_data('validator_swap_pool', query.swap_id[2:], query.chain_name))
-            self.loop.run_until_complete(self.storage.store_data(query.swap_id[2:], 'response', json.dumps(sign_info_list)))
+
+            # Store the hotkey of the miner along with the account address of the miner to use in the reward function.
+            miner_hotkey = self.metagraph.hotkeys[response.output[0]]
+            miner_account_address = response.output[1]
+            self.loop.run_until_complete(self.storage.store_hotkey(miner_account_address, miner_hotkey))
 
             # Log the responses for monitoring purposes.
             bt.logging.info(f"response: {response}")
+            bt.logging.debug(f"sign_info_list: {sign_info_list}")
+        
+        swap_info = {
+            "chain_name": query.chain_name,
+            "sign_info_list": sign_info_list
+        }
 
+        self.loop.run_until_complete(self.storage.store_swap(query.swap_id[2:], swap_info))
         query.output = True           
         return query
 

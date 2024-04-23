@@ -79,6 +79,8 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str]) -> float:
     winner = chain.get_winner(swap_id)
     
     bt.logging.info(f"Winner: {winner}")
+    hotkey = self.loop.run_until_complete(self.storage.retrieve_hotkey(winner))
+    bt.logging.info(f"Hotkey: {hotkey}")
 
     return bid_amount * self.config.neuron.winner_reward_rate if account_address == winner else bid_amount
 

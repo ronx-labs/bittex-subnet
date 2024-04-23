@@ -20,19 +20,17 @@
 import time
 import typing
 import bittensor as bt
-import os
 import base64
 
 from dotenv import load_dotenv
 
-# Bittensor Miner Template:
 import exchangenet
 
-# import base miner class which takes care of most of the boilerplate
 from exchangenet.base.miner import BaseMinerNeuron
-
 from exchangenet.shared.blockchain.chains import chains
 from exchangenet.miner.pricing import adjust_bid_amount
+from exchangenet.miner.storage import MinerStorage
+
 
 class Miner(BaseMinerNeuron):
     """
@@ -50,6 +48,9 @@ class Miner(BaseMinerNeuron):
             "address": self.config.wallet.address,
             "private_key": self.config.wallet.private_key
         }
+
+        self.storage = MinerStorage(self.env_wallet["address"])
+
         # self.loop.run_until_complete(self.storage.delete_name(f'miner_{self.env_wallet["address"]}_swap_pool'))
 
     async def withdraw(self):
@@ -62,16 +63,17 @@ class Miner(BaseMinerNeuron):
             self (:obj:`bittensor.neuron.Neuron`): The neuron object which contains all the necessary state for the miner.
 
         """
-        swaps = self.loop.run_until_complete(self.storage.get_all_data(f'miner_{self.env_wallet["address"]}_swap_pool'))
+        swaps = self.loop.run_until_complete(self.storage.retrieve_swaps())
         
         try:
             for swap in swaps:
-                swap_id = bytes.fromhex(swap)
-                chain_name = await self.storage.retrieve_data(f'miner_{self.env_wallet["address"]}_swap_pool', swap)
+                chain_name = await self.storage.retrieve_swap(swap)
                 chain = chains[chain_name]
 
+                swap_id = bytes.fromhex(swap)
+
                 if chain.get_winner(swap_id) == self.env_wallet["address"]:
-                    await self.storage.delete_data(f'miner_{self.env_wallet["address"]}_swap_pool', swap_id)
+                    await self.storage.delete_swap(swap)
                 elif (chain.is_finalized(swap_id) or chain.is_expired(swap_id)):
                     try:
                         bt.logging.info(f"Withdrawing bid from swap {swap_id}.")
@@ -80,7 +82,7 @@ class Miner(BaseMinerNeuron):
                         # TODO: what if withdraw failed?
                         
                         bt.logging.success(f"Withdrew bid from swap {swap_id}. Deleting swap from the database...")
-                        await self.storage.delete_data(f'miner_{self.env_wallet["address"]}_swap_pool', swap_id)
+                        await self.storage.delete_swap(swap)
                         
                     except Exception as e:
                         bt.logging.error(f"Failed to withdraw bid from swap {swap_id}. Error: {e}")
@@ -100,10 +102,10 @@ class Miner(BaseMinerNeuron):
         signed by its private key to claim the ownership of the address.
 
         Args:
-            synapse (template.protocol.SwapNotification): The synapse object containing the 'swap_id'.
+            synapse (exchangenet.protocol.SwapNotification): The synapse object containing the 'swap_id'.
 
         Returns:
-            template.protocol.SwapNotification: The synapse object with the 'output' field which contains the public address and encrypted message.
+            exchangenet.protocol.SwapNotification: The synapse object with the 'output' field which contains the public address and encrypted message.
         """
         chain = chains[synapse.chain_name]
         swap_id = bytes.fromhex(synapse.swap_id[2:])
@@ -138,7 +140,7 @@ class Miner(BaseMinerNeuron):
             bt.logging.error(f"Error encrypting swap_id: {e}. Failed to encrypt swap_id {chain.web3.to_hex(swap_id)}.")
 
         # Store swap info in the swap pool
-        self.loop.run_until_complete(self.storage.store_data(f'miner_{self.env_wallet["address"]}_swap_pool', synapse.swap_id[2:], synapse.chain_name))
+        self.loop.run_until_complete(self.storage.store_swap(synapse.swap_id[2:], synapse.chain_name))
             
         return synapse
 

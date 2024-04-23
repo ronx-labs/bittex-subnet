@@ -39,19 +39,21 @@ async def forward(self):
     start_time = time.time()
 
     # Retrieve all the swap_ids from the swap pool.
-    swaps = self.loop.run_until_complete(self.storage.get_all_data('validator_swap_pool'))
+    swaps = self.loop.run_until_complete(self.storage.retrieve_swaps())
+
     for swap in swaps:
         try:
+            bt.logging.debug(f"Swap: {swap}")
+            swap_info = await self.storage.retrieve_swap(swap)
+            
             swap_id = bytes.fromhex(swap)
             bt.logging.info(f"Checking a swap with swap_id {swap_id}: ")
-
-            chain_name = await self.storage.retrieve_data('validator_swap_pool', swap)
-            chain = chains[chain_name]
-            bt.logging.debug(f"Chain: {chain}")
+            bt.logging.debug(f"Swap info: {swap_info['chain_name']}")
+            bt.logging.debug(f"Swap info: {swap_info['sign_info_list']}")
+            
+            chain = chains[swap_info["chain_name"]]
             if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
-                    # Get swap info from swap_id.
-                    sign_info_list = await self.storage.retrieve_data(swap, 'response')
-                    sign_info_list = json.loads(sign_info_list)
+                    sign_info_list = swap_info["sign_info_list"]
                     bt.logging.debug(f"Sign info list: {sign_info_list}")
                     
                     # Adjust the scores based on responses from miners.
@@ -63,7 +65,7 @@ async def forward(self):
                     self.update_scores(rewards, uids)
 
                     # Delete the swap_id from the swap pool.
-                    await self.storage.delete_data('validator_swap_pool', swap)
+                    await self.storage.delete_swap(swap)
             
         except Exception as e:
             bt.logging.error(f"Error in forward: {e}")

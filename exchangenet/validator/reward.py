@@ -67,8 +67,8 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str]) -> float:
     encrypted_swap_id = base64.b64decode(encrypted_swap_id)
 
     # Verify the account address
-    chain_name = self.storage.retrieve_data("validator_swap_pool", bytes.hex(swap_id))
-    chain = chains[chain_name]
+    swap_info = self.loop.run_until_complete(self.storage.retrieve_swap(bytes.hex(swap_id)))
+    chain = chains[swap_info["chain_name"]]
     is_verified = chain.verify_signature(chain.web3.to_hex(swap_id), encrypted_swap_id, bytes.fromhex(account_address[2:]))
 
     if not is_verified:
@@ -79,6 +79,8 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str]) -> float:
     winner = chain.get_winner(swap_id)
     
     bt.logging.info(f"Winner: {winner}")
+    hotkey = self.loop.run_until_complete(self.storage.retrieve_hotkey(winner))
+    bt.logging.info(f"Hotkey: {hotkey}")
 
     return bid_amount * self.config.neuron.winner_reward_rate if account_address == winner else bid_amount
 

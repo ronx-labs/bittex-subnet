@@ -58,8 +58,12 @@ class BaseMinerNeuron(BaseNeuron):
         bt.logging.info(f"Attaching forward function to miner axon.")
         self.axon.attach(
             forward_fn=self.forward,
-            blacklist_fn=self.blacklist,
-            priority_fn=self.priority,
+            blacklist_fn=self.swap_notification_blacklist,
+            priority_fn=self.swap_notification_priority,
+        ).attach(
+            forward_fn=self.discovery,
+            blacklist_fn=self.discovery_blacklist,
+            priority_fn=self.discovery_priority,
         )
         bt.logging.info(f"Axon created: {self.axon}")
 

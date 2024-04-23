@@ -113,7 +113,42 @@ class Validator(BaseValidatorNeuron):
         query.output = True           
         return query
 
-    async def blacklist(
+    async def swap_discovery(self, query: Pricing) -> Pricing:
+        """
+        The swap_discovery function is called by the validator every time swap discovery requests are received.
+        It sends the swap discovery notification to the miners.
+
+        Args:
+            synapse (exchangenet.protocol.Pricing): The incoming swap discovery request.
+        """
+        # TODO(developer): Define how the validator selects a miner to query, how often, etc.
+        # get_random_uids is an example method, but you can replace it with your own.
+        miner_uids = get_available_uids(self)
+        bt.logging.info(f"Selected miners: {miner_uids}")
+
+        # The dendrite client queries the network.
+        responses = await self.dendrite(
+            # Send the query to selected miner axons in the network.
+            axons=[self.metagraph.axons[uid] for uid in miner_uids],
+            # Construct a query based on swapId.
+            synapse=Pricing(input_token=query.input_token, output_token=query.output_token, amount=query.amount, output=query.output, network=query.network),
+            # All responses have the deserialize function called on them before returning.
+            # You are encouraged to define your own deserialization function.
+            deserialize=True
+        )
+
+        pricing_list = []
+
+        for response in responses:
+            # Log the responses for monitoring purposes.
+            bt.logging.info(f"response: {response}")
+
+            pricing_list.append(response.output)
+        pricing_list.sort()
+        query.output = pricing_list[-1]
+        return query
+
+    async def swap_request_blacklist(
         self, synapse: exchangenet.protocol.SwapRequest
     ) -> typing.Tuple[bool, str]:
         """

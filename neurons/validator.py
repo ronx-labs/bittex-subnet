@@ -28,7 +28,7 @@ import exchangenet
 from exchangenet.validator import forward
 from exchangenet.base.validator import BaseValidatorNeuron
 from exchangenet.utils.uids import get_available_uids
-from exchangenet.protocol import SwapRequest, SwapNotification
+from exchangenet.protocol import SwapRequest, SwapNotification, Pricing
 from exchangenet.shared.remote_config import ValidatorConfig
 from exchangenet.validator.storage import ValidatorStorage
 
@@ -113,7 +113,42 @@ class Validator(BaseValidatorNeuron):
         query.output = True           
         return query
 
-    async def blacklist(
+    async def swap_discovery(self, query: Pricing) -> Pricing:
+        """
+        The swap_discovery function is called by the validator every time swap discovery requests are received.
+        It sends the swap discovery notification to the miners.
+
+        Args:
+            synapse (exchangenet.protocol.Pricing): The incoming swap discovery request.
+        """
+        # TODO(developer): Define how the validator selects a miner to query, how often, etc.
+        # get_random_uids is an example method, but you can replace it with your own.
+        miner_uids = get_available_uids(self)
+        bt.logging.info(f"Selected miners: {miner_uids}")
+
+        # The dendrite client queries the network.
+        responses = await self.dendrite(
+            # Send the query to selected miner axons in the network.
+            axons=[self.metagraph.axons[uid] for uid in miner_uids],
+            # Construct a query based on swapId.
+            synapse=Pricing(input_token=query.input_token, output_token=query.output_token, amount=query.amount, output=query.output, network=query.network),
+            # All responses have the deserialize function called on them before returning.
+            # You are encouraged to define your own deserialization function.
+            deserialize=True
+        )
+
+        pricing_list = []
+
+        for response in responses:
+            # Log the responses for monitoring purposes.
+            bt.logging.info(f"response: {response}")
+
+            pricing_list.append(response.output)
+        pricing_list.sort()
+        query.output = pricing_list[-1]
+        return query
+
+    async def swap_request_blacklist(
         self, synapse: exchangenet.protocol.SwapRequest
     ) -> typing.Tuple[bool, str]:
         """
@@ -125,7 +160,7 @@ class Validator(BaseValidatorNeuron):
         requests before they are deserialized to avoid wasting resources on requests that will be ignored.
 
         Args:
-            synapse (template.protocol.SwapNotification): A synapse object constructed from the headers of the incoming request.
+            synapse (exchangenet.protocol.SwapRequest): A synapse object constructed from the headers of the incoming request.
 
         Returns:
             Tuple[bool, str]: A tuple containing a boolean indicating whether the synapse's hotkey is blacklisted,
@@ -152,7 +187,7 @@ class Validator(BaseValidatorNeuron):
             return True, "Unrecognized hotkey"
 
     
-    async def priority(self, synapse: exchangenet.protocol.SwapRequest) -> float:
+    async def swap_request_priority(self, synapse: exchangenet.protocol.SwapRequest) -> float:
         """
         The priority function determines the order in which requests are handled. More valuable or higher-priority
         requests are processed before others. You should design your own priority mechanism with care.
@@ -160,7 +195,7 @@ class Validator(BaseValidatorNeuron):
         This implementation assigns priority to incoming requests based on the calling entity's stake in the metagraph.
 
         Args:
-            synapse (template.protocol.SwapNotification): The synapse object that contains metadata about the incoming request.
+            synapse (exchangenet.protocol.SwapRequest): The synapse object that contains metadata about the incoming request.
 
         Returns:
             float: A priority score derived from the stake of the calling entity.
@@ -173,6 +208,41 @@ class Validator(BaseValidatorNeuron):
         - A higher stake results in a higher priority value.
         """
         # TODO(developer): Define how miners should prioritize requests.
+        priority = 1
+        if synapse.dendrite.hotkey == self.remote_config.app_hotkey:
+            priority = 1000
+        bt.logging.trace(
+            f"Prioritizing {synapse.dendrite.hotkey} with value: ", priority
+        )
+        return priority
+
+    async def swap_discovery_blacklist(
+        self, synapse: exchangenet.protocol.Pricing
+    ) -> typing.Tuple[bool, str]:
+        """
+        Blacklist runs before the synapse data has been deserialized (i.e. before synapse.data is available).
+        The synapse is instead contructed via the headers of the request. 
+
+        Args:
+            synapse (exchangenet.protocol.Pricing): A synapse object constructed from the headers of the incoming request.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating whether the synapse's hotkey is blacklisted,
+                            and a string providing the reason for the decision.
+        """
+        if synapse.dendrite.hotkey == self.remote_config.app_hotkey:
+            return False, "Hotkey recognized!"
+        else:
+            return True, "Unrecognized hotkey"
+
+    async def swap_discovery_priority(self, synapse: exchangenet.protocol.Pricing) -> float:
+        """
+        Args:
+            synapse (exchangenet.protocol.Pricing): The synapse object that contains metadata about the incoming request.
+
+        Returns:
+            float: A priority score derived from the stake of the calling entity.
+        """
         priority = 1
         if synapse.dendrite.hotkey == self.remote_config.app_hotkey:
             priority = 1000

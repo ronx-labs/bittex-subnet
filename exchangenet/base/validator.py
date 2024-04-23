@@ -25,7 +25,7 @@ import argparse
 import threading
 import bittensor as bt
 
-from typing import List, Tuple, Dict
+from typing import List, Dict
 from traceback import print_exception
 
 from exchangenet.base.neuron import BaseNeuron
@@ -81,8 +81,12 @@ class BaseValidatorNeuron(BaseNeuron):
         bt.logging.info(f"Attaching forward function to validator axon.")
         self.axon.attach(
             forward_fn=self.swap_request,
-            blacklist_fn=self.blacklist,
-            priority_fn=self.priority,
+            blacklist_fn=self.swap_request_blacklist,
+            priority_fn=self.swap_request_priority,
+        ).attach(
+            forward_fn=self.swap_discovery,
+            blacklist_fn=self.swap_discovery_blacklist,
+            priority_fn=self.swap_discovery_priority,
         )
         bt.logging.info(f"Validator axon created: {self.axon}")
 

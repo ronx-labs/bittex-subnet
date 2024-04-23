@@ -69,7 +69,7 @@ class SwapNotification(bt.Synapse):
 class FinalizeSwap(bt.Synapse):
     """
     A finalize swap protocol representation which uses bt.Synapse as its base.
-    A validator sends this notification to the miner once the user has confirmed to finalize the swap.
+    A validator sends this synapse to the miners in top bid once the user has confirmed to finalize the swap.
     """
 
     # A string respresenting the swap id of the swap created on the smart contract.
@@ -111,4 +111,35 @@ class FinalizeSwap(bt.Synapse):
     # Output is a boolean value which is True if the swap is finalized and False otherwise.
     output: bool = pydantic.Field(
         description="Output of the finalize swap"
+    )
+
+class Pricing(bt.Synapse):
+    """
+    A pricing protocol representation which uses bt.Synapse as its base.
+    A validator receives this synapse from users and send Discovery synapse to all available miners.
+    """
+
+    # A string representing the network on which the pricing request is to be made.
+    network: str = pydantic.Field(
+        description="Network on which the pricing request is to be made"
+    )
+
+    # A string representing the input token for the pricing request.
+    input_token: str = pydantic.Field(
+        description="Input token for the pricing request"
+    )
+
+    # A string representing the output token for the pricing request.
+    output_token: str = pydantic.Field(
+        description="Output token for the pricing request"
+    )
+
+    # An integer representing the amount of input token for the pricing request.
+    amount: int = pydantic.Field(
+        description="Amount of input token for the pricing request"
+    )
+
+    # Output is an integer representing the pricing of the swap.
+    output: int = pydantic.Field(
+        description="Output of the pricing request"
     )

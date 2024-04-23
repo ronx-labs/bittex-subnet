@@ -53,6 +53,34 @@ class Miner(BaseMinerNeuron):
 
         # self.loop.run_until_complete(self.storage.delete_name(f'miner_{self.env_wallet["address"]}_swap_pool'))
 
+    async def discovery(
+        self, synapse: exchangenet.protocol.Pricing
+    ) -> exchangenet.protocol.Pricing:
+        """
+        Processes the incoming 'Pricing' synapse that contains pricing discovery request.
+        A miner receives this synapse when a user wants to swap tokens.
+        Then miner quotes the price for the swap and returns the output amount.
+        
+        Args:
+            synapse (exchangenet.protocol.Pricing): The synapse object containing discovery request info.
+
+        Returns:
+            exchangenet.protocol.Pricing: The synapse object containing pricing output amount.
+        """
+        chain = chains[synapse.network]
+
+        # Get the token information from the swap
+        input_token_address = chain.web3.to_checksum_address(synapse.input_token)
+        output_token_address = chain.web3.to_checksum_address(synapse.output_token)
+        
+        # Adjust the bid amount
+        bid_amount = adjust_bid_amount(input_token_address, output_token_address, synapse.amount, chain.rpc_url)
+        bt.logging.info(f"Pricing discovery amount: {bid_amount}")
+        
+        synapse.output = bid_amount
+        
+        return synapse
+
     async def withdraw(self):
         """
         The withdraw function is called by the miner every time step.

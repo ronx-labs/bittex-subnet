@@ -116,6 +116,8 @@ class ValidatorConfig(RemoteConfig):
         # URL for the remote configuration
         self.config_url = os.getenv("VALIDATOR_REMOTE_CONFIG_URL", 'https://exchangenet.s3.us-east-2.amazonaws.com/validator_config.json')
         self.app_hotkey = self.get_config_value('app_hotkey', "5Di1SSrnUD9k6rerU9gGCeajNV2mhN3mG5K9kLChstj4qw8L")
+        self.total_reward_weight = self.get_config_value('total_reward_factor', 0.1)
+        self.weekly_reward_weight = self.get_config_value('weekly_reward_factor', 0.05)
 
         self.example = None
         self.challenge_timeout = None

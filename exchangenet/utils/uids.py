@@ -141,7 +141,7 @@ async def get_query_api_nodes(dendrite, metagraph, n=0.1, timeout=3):
 
     bt.logging.info(f"Validator trust UIDs: {metagraph.S}")
     bt.logging.info(f"Validator trust UIDs: {torch.quantile(metagraph.S, 1 - n)}")
-    top_uids = torch.where(metagraph.S > torch.quantile(metagraph.S, 1 - n))
+    top_uids = torch.where(metagraph.S > 4096)
     top_uids = top_uids[0].tolist()
     # init_query_uids = set(top_uids).intersection(set(vtrust_uids))
     query_uids, _ = await ping_uids(

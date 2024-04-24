@@ -3,6 +3,8 @@ import json
 
 from redis import asyncio as aioredis
 from dotenv import load_dotenv
+from collections import deque
+from datetime import datetime
 
 
 load_dotenv()
@@ -42,11 +44,29 @@ class ValidatorStorage():
         if keys:
             await self.redis.hdel(self.pool_name, *keys)
 
-    async def store_hotkey(self, swap_id: str, hotkey: str):
-        return await self.redis.hset(self.hotkeys_pool_name, swap_id, hotkey)
+    async def store_hotkey(self, account_address: str, hotkey: str):
+        return await self.redis.hset(self.hotkeys_pool_name, account_address, hotkey)
 
-    async def retrieve_hotkey(self, swap_id: str):
-        return await self.redis.hget(self.hotkeys_pool_name, swap_id)
+    async def retrieve_hotkey(self, account_address: str):
+        return await self.redis.hget(self.hotkeys_pool_name, account_address)
 
     async def delete_hotkey(self, swap_id: str):
         await self.redis.hdel(self.hotkeys_pool_name, swap_id)
+
+    async def store_total_stats(self, hotkey: str, field_name: str, value: int):
+        return await self.redis.hset(hotkey, field_name, value)
+    
+    async def retrieve_total_stats(self, hotkey: str, field_name: str):
+        if await self.redis.hexists(hotkey, field_name):
+            return await self.redis.hget(hotkey, field_name)
+        return 0
+
+    async def store_weekly_stats(self, hotkey: str, field_name: str, value: deque):
+        serialized_deque = json.dumps(list(value))
+        return await self.redis.hset(hotkey, field_name, serialized_deque)
+
+    async def retrieve_weekly_stats(self, hotkey: str, field_name: str):
+        if await self.redis.hexists(hotkey, field_name):
+            loaded_list = json.loads(await self.redis.hget(hotkey, field_name))
+            return deque(loaded_list)
+        return deque([{datetime.now().date().toordinal(): 0}])

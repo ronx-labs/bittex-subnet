@@ -21,8 +21,13 @@ import bittensor as bt
 import time
 import json
 
+from collections import deque
+from datetime import datetime, timedelta
+
 from exchangenet.validator.reward import get_rewards
 from exchangenet.shared.blockchain.chains import chains
+from exchangenet.shared.blockchain.evm import ZERO_ADDRESS
+from exchangenet.miner.pricing import get_output_amount
 
 
 async def forward(self):
@@ -53,19 +58,67 @@ async def forward(self):
             
             chain = chains[swap_info["chain_name"]]
             if chain.is_finalized(swap_id) or chain.is_expired(swap_id):
-                    sign_info_list = swap_info["sign_info_list"]
-                    bt.logging.debug(f"Sign info list: {sign_info_list}")
-                    
-                    # Adjust the scores based on responses from miners.
-                    rewards = get_rewards(self, swap_id, sign_info_list)
-                    bt.logging.info(f"Scored responses: {rewards}")
-                    
-                    # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-                    uids = [sign_info[0] for sign_info in sign_info_list if sign_info[0] >= 0]
-                    self.update_scores(rewards, uids)
+                winner = chain.get_winner(swap_id)
+                if winner != ZERO_ADDRESS:
+                    # Get the hotkey for the swap_id.
+                    hotkey = await self.storage.retrieve_hotkey(winner)
 
-                    # Delete the swap_id from the swap pool.
-                    await self.storage.delete_swap(swap)
+                    # Get the transaction amount converted to USDT.
+                    usdt_address = chain.web3.to_checksum_address(chain.get_token_by_symbol("USDT").address)
+                    output_token_address = chain.web3.to_checksum_address(chain.get_swap(swap_id).output_token_address)
+                    bid_amount = chain.get_bid_amount(swap_id, winner)
+                    transaction_amount = get_output_amount(output_token_address, usdt_address, bid_amount, chain.rpc_url)
+
+                    # Get the current date.
+                    current_date = datetime.now().date().toordinal()
+
+                    # Update the transaction count and amount for the hotkey.
+                    total_transaction_count = await self.storage.retrieve_total_stats(hotkey, 'total_transaction_count')
+                    total_transaction_amount = await self.storage.retrieve_total_stats(hotkey, 'total_transaction_amount')
+                    weekly_transaction_count = await self.storage.retrieve_weekly_stats(hotkey, 'weekly_transaction_count')
+                    weekly_transaction_amount = await self.storage.retrieve_weekly_stats(hotkey, 'weekly_transaction_amount')
+
+                    total_transaction_count = int(total_transaction_count) + 1
+                    total_transaction_amount = int(total_transaction_amount) + transaction_amount
+ 
+                    if current_date - int(list(weekly_transaction_count[0].keys())[0]) > 7:
+                        weekly_transaction_count.popleft()
+                        weekly_transaction_count.append({current_date: 1})
+                    else:
+                        if int(list(weekly_transaction_count[-1].keys())[0]) == current_date:
+                            weekly_transaction_count[-1][current_date] = int(weekly_transaction_count[-1][current_date]) + 1
+                        else:
+                            weekly_transaction_count.append({current_date: 1})
+
+                    if current_date - int(list(weekly_transaction_amount[0].keys())[0]) > 7:
+                        weekly_transaction_amount.popleft()
+                        weekly_transaction_amount.append({current_date: transaction_amount})
+                    else:
+                        if int(list(weekly_transaction_amount[-1].keys())[0]) == current_date:
+                            weekly_transaction_amount[-1][current_date] = int(weekly_transaction_amount[-1][current_date]) + transaction_amount
+                        else:
+                            weekly_transaction_amount.append({current_date: transaction_amount})
+
+                    # Store the updated transaction count and amount in the validator storage.
+                    self.loop.run_until_complete(self.storage.store_total_stats(hotkey, 'total_transaction_count', total_transaction_count))
+                    self.loop.run_until_complete(self.storage.store_total_stats(hotkey, 'total_transaction_amount', total_transaction_amount))  
+                    self.loop.run_until_complete(self.storage.store_weekly_stats(hotkey, 'weekly_transaction_count', weekly_transaction_count))
+                    self.loop.run_until_complete(self.storage.store_weekly_stats(hotkey, 'weekly_transaction_amount', weekly_transaction_amount))
+
+                # Get swap info from swap_id.
+                sign_info_list = swap_info["sign_info_list"]
+                bt.logging.debug(f"Sign info list: {sign_info_list}")
+                
+                # Adjust the scores based on responses from miners.
+                rewards = get_rewards(self, swap_id, sign_info_list)
+                bt.logging.info(f"Scored responses: {rewards}")
+                
+                # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
+                uids = [sign_info[0] for sign_info in sign_info_list if sign_info[0] >= 0]
+                self.update_scores(rewards, uids)
+
+                # Delete the swap_id from the swap pool.
+                await self.storage.delete_swap(swap)
             
         except Exception as e:
             bt.logging.error(f"Error in forward: {e}")

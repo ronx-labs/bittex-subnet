@@ -61,7 +61,7 @@ def add_args(cls, parser):
     Adds relevant arguments to the parser for operation.
     """
 
-    parser.add_argument("--netuid", type=int, help="Subnet netuid", default=1)
+    parser.add_argument("--netuid", type=int, help="Subnet netuid", default=33)
 
     parser.add_argument(
         "--neuron.device",
@@ -124,10 +124,10 @@ def add_miner_args(cls, parser):
     """Add miner specific arguments to the parser."""
 
     parser.add_argument(
-        "--neuron.name",
+        "--miner.name",
         type=str,
         help="Trials for this neuron go in neuron.root / (wallet_cold - wallet_hot) / neuron.name. ",
-        default="miner",
+        default="bittex-miner",
     )
 
     parser.add_argument(
@@ -160,14 +160,14 @@ def add_miner_args(cls, parser):
     parser.add_argument(
         "--wandb.project_name",
         type=str,
-        default="template-miners",
+        default="bittex-subnet",
         help="Wandb project to log to.",
     )
 
     parser.add_argument(
         "--wandb.entity",
         type=str,
-        default="opentensor-dev",
+        default="bittex",
         help="Wandb entity to log to.",
     )
 
@@ -179,7 +179,7 @@ def add_validator_args(cls, parser):
         "--neuron.name",
         type=str,
         help="Trials for this neuron go in neuron.root / (wallet_cold - wallet_hot) / neuron.name. ",
-        default="validator",
+        default="bittex-validator",
     )
 
     parser.add_argument(
@@ -252,14 +252,14 @@ def add_validator_args(cls, parser):
         "--wandb.project_name",
         type=str,
         help="The name of the project where you are sending the new run.",
-        default="template-validators",
+        default="bittex-subnet",
     )
 
     parser.add_argument(
         "--wandb.entity",
         type=str,
         help="The name of the project where you are sending the new run.",
-        default="opentensor-dev",
+        default="bittex",
     )
     
     parser.add_argument(

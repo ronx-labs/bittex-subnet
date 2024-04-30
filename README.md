@@ -54,5 +54,5 @@ Miners' scores are calculated based on their activity in each swap, with additio
 - **App**: https://app.bittex.xyz/
 - **X Account**: https://twitter.com/BittexSN/
 - **Discord Server**: https://discord.gg/XdAa7BAN8H
-- **Smart Contract Deployment**: https://bscscan.com/
-- **CertiK Security Profile**: https://certik.com/
+- **Smart Contract Deployment**: https://bscscan.com/address/0x4c8cc220d29c19baa2bd8c39ddc27e5d65c7234f/
+- **CertiK Security Profile**: https://skynet.certik.com/projects/bittex/

@@ -22,8 +22,8 @@ Bittex is committed to enhancing the user experience by offering exceptional exc
 
 Proof of bid (PoB) is an underlying protocol that makes sure everything on our platform runs smoothly. At its core lies the smart contract, which guarantees that swap transactions are executed accurately and in accordance with predetermined rules. The contract's integrity is verified and audited by CertiK, underscoring our commitment to a trustworthy platform.
 
-- (bscscan link here)
-- (certik link here)
+- https://bscscan.com/address/0x4c8cc220d29c19baa2bd8c39ddc27e5d65c7234f/
+- https://skynet.certik.com/projects/bittex/
 
 ### PoB explained by sequence diagram
 

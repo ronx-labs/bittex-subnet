@@ -1,2 +1,9 @@
 bittensor
 torch
+web3
+streamlit
+python-dotenv
+uniswap-python
+redis
+aioredis
+loguru

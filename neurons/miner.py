@@ -20,12 +20,16 @@
 import time
 import typing
 import bittensor as bt
+import base64
 
-# Bittensor Miner Template:
-import template
+from dotenv import load_dotenv
 
-# import base miner class which takes care of most of the boilerplate
-from template.base.miner import BaseMinerNeuron
+import exchangenet
+
+from exchangenet.base.miner import BaseMinerNeuron
+from exchangenet.shared.blockchain.chains import chains
+from exchangenet.miner.pricing import adjust_bid_amount
+from exchangenet.miner.storage import MinerStorage
 
 
 class Miner(BaseMinerNeuron):
@@ -39,31 +43,137 @@ class Miner(BaseMinerNeuron):
 
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
+        load_dotenv()
+        self.env_wallet = {
+            "address": self.config.wallet.address,
+            "private_key": self.config.wallet.private_key
+        }
 
-        # TODO(developer): Anything specific to your use case you can do here
+        self.storage = MinerStorage(self.env_wallet["address"])
 
-    async def forward(
-        self, synapse: template.protocol.Dummy
-    ) -> template.protocol.Dummy:
+        # self.loop.run_until_complete(self.storage.delete_name(f'miner_{self.env_wallet["address"]}_swap_pool'))
+
+    async def discovery(
+        self, synapse: exchangenet.protocol.Pricing
+    ) -> exchangenet.protocol.Pricing:
         """
-        Processes the incoming 'Dummy' synapse by performing a predefined operation on the input data.
-        This method should be replaced with actual logic relevant to the miner's purpose.
-
+        Processes the incoming 'Pricing' synapse that contains pricing discovery request.
+        A miner receives this synapse when a user wants to swap tokens.
+        Then miner quotes the price for the swap and returns the output amount.
+        
         Args:
-            synapse (template.protocol.Dummy): The synapse object containing the 'dummy_input' data.
+            synapse (exchangenet.protocol.Pricing): The synapse object containing discovery request info.
 
         Returns:
-            template.protocol.Dummy: The synapse object with the 'dummy_output' field set to twice the 'dummy_input' value.
-
-        The 'forward' function is a placeholder and should be overridden with logic that is appropriate for
-        the miner's intended operation. This method demonstrates a basic transformation of input data.
+            exchangenet.protocol.Pricing: The synapse object containing pricing output amount.
         """
-        # TODO(developer): Replace with actual implementation logic.
-        synapse.dummy_output = synapse.dummy_input * 2
+        chain = chains[synapse.network]
+
+        # Get the token information from the swap
+        input_token_address = chain.web3.to_checksum_address(synapse.input_token)
+        output_token_address = chain.web3.to_checksum_address(synapse.output_token)
+        
+        # Adjust the bid amount
+        bid_amount = adjust_bid_amount(input_token_address, output_token_address, synapse.amount, chain.rpc_url)
+        bt.logging.info(f"Pricing discovery amount: {bid_amount}")
+        
+        synapse.output = bid_amount
+        
         return synapse
 
-    async def blacklist(
-        self, synapse: template.protocol.Dummy
+    async def withdraw(self):
+        """
+        The withdraw function is called by the miner every time step.
+
+        It enables miners withdraw their bids from finalized or expired swaps.
+
+        Args:
+            self (:obj:`bittensor.neuron.Neuron`): The neuron object which contains all the necessary state for the miner.
+
+        """
+        swaps = self.loop.run_until_complete(self.storage.retrieve_swaps())
+        
+        try:
+            for swap in swaps:
+                chain_name = await self.storage.retrieve_swap(swap)
+                chain = chains[chain_name]
+
+                swap_id = bytes.fromhex(swap)
+
+                if chain.get_winner(swap_id) == self.env_wallet["address"]:
+                    await self.storage.delete_swap(swap)
+                elif (chain.is_finalized(swap_id) or chain.is_expired(swap_id)):
+                    try:
+                        bt.logging.info(f"Withdrawing bid from swap {swap_id}.")
+                        chain.withdraw_bid(swap_id, chain.web3.to_checksum_address(self.env_wallet["address"]), self.env_wallet["private_key"])
+                        
+                        # TODO: what if withdraw failed?
+                        
+                        bt.logging.success(f"Withdrew bid from swap {swap_id}. Deleting swap from the database...")
+                        await self.storage.delete_swap(swap)
+                        
+                    except Exception as e:
+                        bt.logging.error(f"Failed to withdraw bid from swap {swap_id}. Error: {e}")
+                        continue
+
+        except Exception as e:
+            bt.logging.error(f"Error withdrawing bids: {e}.")
+            time.sleep(1)
+
+    async def forward(
+        self, synapse: exchangenet.protocol.SwapNotification
+    ) -> exchangenet.protocol.SwapNotification:
+        """
+        Processes the incoming 'SwapNotification' synapse containing 'swap_id' field.
+        A miner should get swap info from the smart contract with 'swap_id' and make a transaction to the smart contract.
+        Then it should return the public address from which the transaction was made and encrypted message
+        signed by its private key to claim the ownership of the address.
+
+        Args:
+            synapse (exchangenet.protocol.SwapNotification): The synapse object containing the 'swap_id'.
+
+        Returns:
+            exchangenet.protocol.SwapNotification: The synapse object with the 'output' field which contains the public address and encrypted message.
+        """
+        chain = chains[synapse.chain_name]
+        swap_id = bytes.fromhex(synapse.swap_id[2:])
+        bt.logging.info(f"Processing swap {swap_id} on chain {synapse.chain_name}.")
+        
+        # Get the token information from the swap
+        input_token_address = chain.web3.to_checksum_address(chain.get_swap(swap_id).input_token_address)
+        output_token_address = chain.web3.to_checksum_address(chain.get_swap(swap_id).output_token_address)
+        amount = chain.get_swap(swap_id).amount
+        
+        # Adjust the bid amount
+        bid_amount = adjust_bid_amount(input_token_address, output_token_address, amount, chain.rpc_url)
+        bt.logging.info(f"Bid amount: {bid_amount}")
+                
+        # Make a bid on the swap
+        try:
+            bt.logging.info("Making bid...")
+            chain.make_bid(swap_id, bid_amount, chain.web3.to_checksum_address(self.env_wallet["address"]), self.env_wallet["private_key"])
+            bt.logging.info("Bid made successfully.")
+            bt.logging.info(chain.get_bid_amount(swap_id, chain.web3.to_checksum_address(self.env_wallet["address"])))
+        except Exception as e:
+            bt.logging.error(f"Error making bid: {e}. Failed to make a bid on swap {chain.web3.to_hex(swap_id)}.")
+            return synapse
+        
+        try:
+            # Encrypt the swap_id with the miner's private key
+            encrypted_swap_id = chain.sign_message(chain.web3.to_hex(swap_id), bytes.fromhex(self.env_wallet["private_key"]))
+
+            # Set the output fields of the synapse
+            synapse.output = self.uid, self.env_wallet["address"], base64.b64encode(encrypted_swap_id).decode('utf-8')
+        except Exception as e:
+            bt.logging.error(f"Error encrypting swap_id: {e}. Failed to encrypt swap_id {chain.web3.to_hex(swap_id)}.")
+
+        # Store swap info in the swap pool
+        self.loop.run_until_complete(self.storage.store_swap(synapse.swap_id[2:], synapse.chain_name))
+            
+        return synapse
+
+    async def swap_notification_blacklist(
+        self, synapse: exchangenet.protocol.SwapNotification
     ) -> typing.Tuple[bool, str]:
         """
         Determines whether an incoming request should be blacklisted and thus ignored. Your implementation should
@@ -74,7 +184,7 @@ class Miner(BaseMinerNeuron):
         requests before they are deserialized to avoid wasting resources on requests that will be ignored.
 
         Args:
-            synapse (template.protocol.Dummy): A synapse object constructed from the headers of the incoming request.
+            synapse (exchangenet.protocol.SwapNotification): A synapse object constructed from the headers of the incoming request.
 
         Returns:
             Tuple[bool, str]: A tuple containing a boolean indicating whether the synapse's hotkey is blacklisted,
@@ -95,17 +205,14 @@ class Miner(BaseMinerNeuron):
         Otherwise, allow the request to be processed further.
         """
         # TODO(developer): Define how miners should blacklist requests.
-        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
-        if (
-            not self.config.blacklist.allow_non_registered
-            and synapse.dendrite.hotkey not in self.metagraph.hotkeys
-        ):
+        uid = self.metagraph.hotkeys.index( synapse.dendrite.hotkey)
+        if not self.config.blacklist.allow_non_registered and synapse.dendrite.hotkey not in self.metagraph.hotkeys:
             # Ignore requests from un-registered entities.
             bt.logging.trace(
                 f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
             )
             return True, "Unrecognized hotkey"
-
+        
         if self.config.blacklist.force_validator_permit:
             # If the config is set to force validator permit, then we should only allow requests from validators.
             if not self.metagraph.validator_permit[uid]:
@@ -119,7 +226,7 @@ class Miner(BaseMinerNeuron):
         )
         return False, "Hotkey recognized!"
 
-    async def priority(self, synapse: template.protocol.Dummy) -> float:
+    async def swap_notification_priority(self, synapse: exchangenet.protocol.SwapNotification) -> float:
         """
         The priority function determines the order in which requests are handled. More valuable or higher-priority
         requests are processed before others. You should design your own priority mechanism with care.
@@ -127,7 +234,7 @@ class Miner(BaseMinerNeuron):
         This implementation assigns priority to incoming requests based on the calling entity's stake in the metagraph.
 
         Args:
-            synapse (template.protocol.Dummy): The synapse object that contains metadata about the incoming request.
+            synapse (exchangenet.protocol.SwapNotification): The synapse object that contains metadata about the incoming request.
 
         Returns:
             float: A priority score derived from the stake of the calling entity.
@@ -151,6 +258,60 @@ class Miner(BaseMinerNeuron):
         )
         return prirority
 
+    async def discovery_blacklist(
+        self, synapse: exchangenet.protocol.Pricing
+    ) -> typing.Tuple[bool, str]:
+        """
+        Blacklist function for the `Pricing` synapse. This function determines whether an incoming request should be blacklisted and thus ignored.
+
+        Args:
+            synapse (exchangenet.protocol.Pricing): A synapse object constructed from the headers of the incoming request.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating whether the synapse's hotkey is blacklisted,
+                            and a string providing the reason for the decision.
+        """
+        uid = self.metagraph.hotkeys.index( synapse.dendrite.hotkey)
+        if not self.config.blacklist.allow_non_registered and synapse.dendrite.hotkey not in self.metagraph.hotkeys:
+            # Ignore requests from un-registered entities.
+            bt.logging.trace(
+                f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
+            )
+            return True, "Unrecognized hotkey"
+        
+        if self.config.blacklist.force_validator_permit:
+            # If the config is set to force validator permit, then we should only allow requests from validators.
+            if not self.metagraph.validator_permit[uid]:
+                bt.logging.warning(
+                    f"Blacklisting a request from non-validator hotkey {synapse.dendrite.hotkey}"
+                )
+                return True, "Non-validator hotkey"
+
+        bt.logging.trace(
+            f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
+        )
+        return False, "Hotkey recognized!"
+
+    async def discovery_priority(self, synapse: exchangenet.protocol.Pricing) -> float:
+        """
+        Priority function for the `Pricing` synapse. This function determines the order in which requests are handled. More valuable or higher-priority requests are processed before others.
+
+        Args:
+            synapse (exchangenet.protocol.Pricing): The synapse object that contains metadata about the incoming request.
+
+        Returns:
+            float: A priority score derived from the stake of the calling entity.
+        """
+        caller_uid = self.metagraph.hotkeys.index(
+            synapse.dendrite.hotkey
+        ) # Get the caller index.
+        prirority = float(
+            self.metagraph.S[caller_uid]
+        )  # Return the stake as the priority.
+        bt.logging.trace(
+            f"Prioritizing {synapse.dendrite.hotkey} with value: ", prirority
+        )
+        return prirority
 
 # This is the main function, which runs the miner.
 if __name__ == "__main__":

@@ -1,18 +1,58 @@
+<div align="center">
+
 # Bittex Subnet
 
+</div>
+
 ## Overview
-The concept behind Bittex is to establish a decentralized, feeless cryptocurrency exchange platform powered by Bittensor network.
 
-Current centralized (CEXs) and decentralized exchanges (DEXs) each have their advantages and drawbacks. CEXs are prone to security breaches and often necessitate divulging personal information, while DEXs offer greater security and privacy through a peer-to-peer model but still impose transaction fees on users.
+Welcome to Bittex, a revolutionary decentralized exchange (DEX) powered by Bittensor, designed to offer the most competitive exchange rates globally. By leveraging the decentralized and dynamic capabilities of Bittensor, Bittex redefines liquidity provision and currency exchange on the blockchain.
 
-Our goal is to create the premier cryptocurrency exchange platform that is both decentralized and free of transaction fees. On our platform, users will be able to trade their tokens at the most competitive rates.
+At Bittex, we adopt an innovative approach to liquidity provision termed "atomic swaps."<br/>
+Unlike traditional DEXs where liquidity providers (LPs) deposit funds into a pool, Bittex requires miners to deposit funds for each swap transaction. This approach significantly reduces the risk of impermanent loss and enhances the efficiency of liquidity provided by our miners.
+
+Miners in the Bittex subnet act as liquidity providers, playing a key role in the platform's operations.
+They participate in a competitive bidding process to fulfill swap requests initiated by users. In each swap, the bids from the top three miners are evaluated, with the best bid executing the swap. Miners are rewarded based on their bid amounts, and the winning miner receives an additional bonus. This structure motivates miners to offer more competitive exchange rates, thereby boosting the overall efficacy of our decentralized exchange.
+
+Bittex is committed to enhancing the user experience by offering exceptional exchange rates and minimizing the risks tied to liquidity provision. By integrating seamlessly with the Bittensor network, Bittex not only gains from a decentralized, secure, and efficient framework, but it also pioneers a brand new innovative market in the DeFi space. This strategic integration positions Bittex as a cutting-edge solution within decentralized finance, reshaping how liquidity and currency exchange are managed on the blockchain.
 
 ## Architecture
 
-- Miners contribute their assets, providing liquidity to our platform without the need to deposit their funds into centralized wallets. Their assets remain in their own wallets without exposing any sensitive information. Miners are simply required to demonstrate their capability as exchangers, which is assessed by verified validators in a decentralized manner.
+### Introduction to Proof of bid
 
-- Validators are responsible for assessing the miners' capabilities. They pose queries such as, "If I want to exchange 100 Ethereum USDT for Binance USDT, how much Binance USDT will you provide in return?" Miners respond based on their balance and the current estimated price. Those offering the most favorable rates are rewarded. Validators verify the miners' responses by requesting a real transaction. For instance, if a miner claims to offer 101 Binance USDT for 100 Ethereum USDT, the validator will provide a Binance address to which the miner is asked to send the 101 Binance USDT. Upon successful completion of the transaction, the validator confirms its validity and scores the miner accordingly, with higher scores for better prices. If the miner fails to send the 101 Binance USDT to the provided address, its answer is determined invalid and gets punished.
+Proof of bid (PoB) is an underlying protocol that makes sure everything on our platform runs smoothly. At its core lies the smart contract, which guarantees that swap transactions are executed accurately and in accordance with predetermined rules. The contract's integrity is verified and audited by CertiK, underscoring our commitment to a trustworthy platform.
 
-- End users initiate exchange requests through validators. A validator selects a miner offering the best rate for the transaction. For example, if a user wishes to make the exchange outlined above, the validator facilitates the exchange by transferring 101 Binance USDT to the user and 100 Ethereum USDT to the miner. This process differs from the verification stage, where the transferred Binance USDT would be returned to the miner. Importantly, miners remain unaware of whether they will receive Binance USDT or Ethereum USDT, as validators use the same query for both verification and actual user transactions.
+- (bscscan link here)
+- (certik link here)
 
-Through this mechanism, our subnet ensures that end users receive the best possible exchange rates. The Bittex subnet aims to become the preferred platform for users seeking optimal exchange rates, thereby enhancing the popularity of the Bittensor network among a wider audience. The growing popularity of the Bittensor network is expected to spur the development of additional subnets, further accelerating AI advancement.
+### PoB explained by sequence diagram
+
+<!-- ![Bittex Subnet Sequence Diagram](docs/Bittex%20Subnet%20Sequence%20Diagram.png) -->
+<img src="docs/Bittex%20Subnet%20Sequence%20Diagram.png" alt="Bittex Subnet Sequence Diagram" style="width: 100%; max-width: 1000px">
+
+### Scoring mechanism
+
+Miners' scores are calculated based on their activity in each swap, with additional consideration for their ongoing and historical performance:
+
+- Swap-Specific Scoring (85%): For each individual swap, a miner's score is determined by:
+  - The bid amount.
+  - Inclusion in the top three bids.
+  - Being the winning bidder.
+
+- Seven-Day Performance (10%): A miner's activity over the last week influences their score through:
+  - The total volume of successful swaps in USD.
+  - The number of swaps won.
+
+- Overall Contributions (5%): Recognizing the miner's total tenure, this aspect includes:
+  - The total volume of successful swaps in USD.
+  - The number of swaps won.
+
+## Links
+
+- **GitHub Repository**: https://github.com/ronnie-samaroo/bittex-subnet/
+- **Website**: https://bittex.xyz/
+- **App**: https://app.bittex.xyz/
+- **X Account**: https://twitter.com/BittexSN/
+- **Discord Server**: https://discord.gg/XdAa7BAN8H
+- **Smart Contract Deployment**: https://bscscan.com/address/0x4c8cc220d29c19baa2bd8c39ddc27e5d65c7234f/
+- **CertiK Security Profile**: https://skynet.certik.com/projects/bittex/

@@ -150,7 +150,7 @@ class Miner(BaseMinerNeuron):
         # Make a bid on the swap
         try:
             bt.logging.info("Checking balance...")
-            balance = chain.get_balance_of_token(input_token_address, chain.web3.to_checksum_address(self.env_wallet["address"]))
+            balance = chain.get_balance_of_token(output_token_address, chain.web3.to_checksum_address(self.env_wallet["address"]))
             bt.logging.debug(f"Balance: {balance}")
             if balance < bid_amount:
                 raise Exception(f"Insufficient balance. Balance: {balance}, Bid amount: {bid_amount}")

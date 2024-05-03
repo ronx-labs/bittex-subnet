@@ -164,6 +164,11 @@ class EvmChain:
             timestamp=raw_swap_info[7]
         )
         return swap
+
+    def get_balance_of_token(self, token_address: str, account_address: str) -> int:
+        token_contract = self.web3.eth.contract(address=token_address, abi=ERC20_ABI)
+        balance = token_contract.functions.balanceOf(account_address).call()
+        return balance
     
     def make_bid(self, swap_id: bytes, amount: int, account_address: str, private_key: str) -> None:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)

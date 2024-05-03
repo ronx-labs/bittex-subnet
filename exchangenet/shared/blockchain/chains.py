@@ -10,7 +10,7 @@ chains = {
         rpc_url="https://bsc-dataseed.binance.org/",
         chain_id=56,
         chain_name="Binance Smart Chain",
-        bittex_contract_address="0x4C8cC220D29C19baA2Bd8C39DDC27e5d65C7234F",
+        bittex_contract_address="0x4B4f0C76CD0E21DDE7888950D5cF09bAa5a69c20",
         bittex_abi=BITTEX_ABI,
         available_tokens=[
             Token(

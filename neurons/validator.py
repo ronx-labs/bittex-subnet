@@ -51,6 +51,7 @@ class Validator(BaseValidatorNeuron):
         self.load_state()
         
         self.storage = ValidatorStorage()
+        # self.loop.run_until_complete(self.storage.clear_swaps())
 
     async def forward(self):
         """

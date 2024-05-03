@@ -132,9 +132,10 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str], uids: List[int]) ->
     if not is_verified:
         return 0.0
 
-    # Get the bid amount and winner of the swap
+    # Get the base reward, winner, and top bidders of the swap
     base_reward = chain.get_bid_amount(swap_id, account_address)
     winner = chain.get_winner(swap_id)
+    top_bidders = chain.get_swap(swap_id).top_bidders
     
     bt.logging.info(f"Winner: {winner}")
     hotkey = self.loop.run_until_complete(self.storage.retrieve_hotkey(winner))
@@ -144,9 +145,17 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str], uids: List[int]) ->
     weekly_reward_factor = get_weekly_reward_factor(self, uids, uid)
 
     # Calculate the reward based on the total and weekly reward factors
-    reward = base_reward * (1 + total_reward_factor + weekly_reward_factor)    
+    reward = base_reward * (1 + total_reward_factor + weekly_reward_factor)
 
-    return reward * self.config.neuron.winner_reward_rate if account_address == winner else reward
+    # Calculate the reward based on the top bidders
+    if account_address in top_bidders:
+        reward *= self.remote_config.top_bidder_reward_rate
+
+    # Calculate the reward based on the winner
+    if account_address == winner:
+        reward *= self.remote_config.winner_reward_rate
+ 
+    return reward
 
 def get_rewards(
     self,

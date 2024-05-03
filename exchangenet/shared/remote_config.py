@@ -118,6 +118,8 @@ class ValidatorConfig(RemoteConfig):
         self.app_hotkey = self.get_config_value('app_hotkey', "5DjuugH43nbGCs6LrEVjxXqZVezTQQk5adZTbmvAv9KhG6dP")
         self.total_reward_weight = self.get_config_value('total_reward_factor', 0.1)
         self.weekly_reward_weight = self.get_config_value('weekly_reward_factor', 0.05)
+        self.top_bidder_reward_rate = self.get_config_value('top_bidder_reward_rate', 1.5)
+        self.winner_reward_rate = self.get_config_value('winner_reward_rate', 2.0)
 
         self.example = None
         self.challenge_timeout = None

@@ -91,6 +91,25 @@
         "type": "bytes32"
       }
     ],
+    "name": "getBidders",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_swapId",
+        "type": "bytes32"
+      }
+    ],
     "name": "getWinner",
     "outputs": [
       {

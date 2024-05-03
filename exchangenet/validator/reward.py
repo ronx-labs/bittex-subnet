@@ -84,7 +84,7 @@ def get_total_reward_factor(self, uids: List[int], uid: int) -> float:
     amount_rank = sorted(total_transaction_counts).index(total_transaction_count)
 
     # Calculate the total reward factor based on the rank
-    total_reward_factor = self.total_reward_weight * (count_rank + amount_rank) / uid_count
+    total_reward_factor = self.remote_config.total_reward_weight * (count_rank + amount_rank) / uid_count
     return total_reward_factor
 
 def get_weekly_reward_factor(self, uids: List[int], uid: int) -> float:
@@ -114,7 +114,7 @@ def get_weekly_reward_factor(self, uids: List[int], uid: int) -> float:
     amount_rank = sorted(weekly_transaction_counts).index(weekly_transaction_count)
 
     # Calculate the weekly reward factor based on the rank
-    weekly_reward_factor = self.weekly_reward_weight * (count_rank + amount_rank) / uid_count
+    weekly_reward_factor = self.remote_config.weekly_reward_weight * (count_rank + amount_rank) / uid_count
     return weekly_reward_factor
 
 def reward(self, swap_id: bytes, info: Tuple[int, str, str], uids: List[int]) -> float:

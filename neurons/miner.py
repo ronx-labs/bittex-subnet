@@ -50,8 +50,7 @@ class Miner(BaseMinerNeuron):
         }
 
         self.storage = MinerStorage(self.env_wallet["address"])
-
-        # self.loop.run_until_complete(self.storage.delete_name(f'miner_{self.env_wallet["address"]}_swap_pool'))
+        # self.loop.run_until_complete(self.storage.delete_swaps())
 
     async def discovery(
         self, synapse: exchangenet.protocol.Pricing

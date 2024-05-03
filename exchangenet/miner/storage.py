@@ -34,3 +34,8 @@ class MinerStorage():
 
     async def delete_swap(self, swap_id: str):
         return await self.redis.delete(self.pool_name, swap_id)
+
+    async def delete_swaps(self):
+        keys = await self.redis.hkeys(self.pool_name)
+        if keys:
+            await self.redis.hdel(self.pool_name, *keys)

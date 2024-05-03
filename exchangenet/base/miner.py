@@ -117,24 +117,12 @@ class BaseMinerNeuron(BaseNeuron):
         # This loop maintains the miner's operations until intentionally stopped.
         try:
             while not self.should_exit:
-                while (
-                    self.block - self.metagraph.last_update[self.uid]
-                    < self.config.neuron.epoch_length
-                ):
-                    # Wait before checking again.
-                    time.sleep(1)
-
-                    if int(time.time()) % 10 == 0:
-                        bt.logging.info(f"Checking for withdraw...")
-                        self.loop.run_until_complete(self.concurrent_forward())
-
-                    # Check if we should exit.
-                    if self.should_exit:
-                        break
-
                 # Sync metagraph and potentially set weights.
+                bt.logging.info(f"Checking for withdraw...")
+                self.loop.run_until_complete(self.concurrent_forward())
                 self.sync()
                 self.step += 1
+                time.sleep(30)
 
         # If someone intentionally stops the miner, it'll safely terminate operations.
         except KeyboardInterrupt:

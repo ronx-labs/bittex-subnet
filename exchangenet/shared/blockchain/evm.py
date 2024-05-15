@@ -115,7 +115,9 @@ class EvmChain:
         })
       
         # Sign and send transaction
-        self.send_transaction(transaction, owner_private_key)
+        txn = self.send_transaction(transaction, owner_private_key)
+        if txn.status == False:
+            raise Exception("Approve transaction failed. Please check the explorer for more details.")
         
         # Remove nonce used for the transaction from queue
         self.remove_used_nonce(owner_address, nonce)
@@ -142,6 +144,8 @@ class EvmChain:
 
         # Sign and send transaction
         txn_receipt = self.send_transaction(transaction, private_key)
+        if txn_receipt.status == False:
+            raise Exception("Create swap transaction failed. Please check the explorer for more details.")
 
         # Remove nonce used for the transaction from queue
         self.remove_used_nonce(account_address, nonce)
@@ -164,6 +168,11 @@ class EvmChain:
             timestamp=raw_swap_info[7]
         )
         return swap
+
+    def get_balance_of_token(self, token_address: str, account_address: str) -> int:
+        token_contract = self.web3.eth.contract(address=token_address, abi=ERC20_ABI)
+        balance = token_contract.functions.balanceOf(account_address).call()
+        return balance
     
     def make_bid(self, swap_id: bytes, amount: int, account_address: str, private_key: str) -> None:
         bittex_contract = self.web3.eth.contract(address=self.bittex_contract_address, abi=self.bittex_abi)
@@ -190,7 +199,9 @@ class EvmChain:
         })
 
         # Sign and send transaction
-        self.send_transaction(transaction, private_key)
+        txn = self.send_transaction(transaction, private_key)
+        if txn.status == False:
+            raise Exception("Make bid transaction failed. Please check the explorer for more details.")
 
         # Remove nonce used for the transaction from queue
         self.remove_used_nonce(account_address, nonce)
@@ -222,7 +233,9 @@ class EvmChain:
         })
 
         # Sign and send transaction
-        self.send_transaction(transaction, private_key)
+        txn = self.send_transaction(transaction, private_key)
+        if txn.status == False:
+            raise Exception("Finalize swap transaction failed. Please check the explorer for more details.")
 
         # Remove nonce used for the transaction from queue
         self.remove_used_nonce(account_address, nonce)
@@ -258,7 +271,9 @@ class EvmChain:
         })
 
         # Sign and send transaction
-        self.send_transaction(transaction, private_key)
+        txn = self.send_transaction(transaction, private_key)
+        if txn.status == False:
+            raise Exception("Withdraw bid transaction failed. Please check the explorer for more details.")
         
         # Remove nonce used for the transaction from queue
         self.remove_used_nonce(account_address, nonce)

@@ -124,6 +124,13 @@ def add_miner_args(cls, parser):
     """Add miner specific arguments to the parser."""
 
     parser.add_argument(
+        "--neuron.disable_set_weights",
+        action="store_true",
+        help="Disables setting weights.",
+        default=True,
+    )
+
+    parser.add_argument(
         "--miner.name",
         type=str,
         help="Trials for this neuron go in neuron.root / (wallet_cold - wallet_hot) / neuron.name. ",

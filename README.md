@@ -4,6 +4,8 @@
 
 </div>
 
+![alt text](docs/banner.png)
+
 ## Overview
 
 Welcome to Bittex, a revolutionary decentralized exchange (DEX) powered by Bittensor, designed to offer the most competitive exchange rates globally. By leveraging the decentralized and dynamic capabilities of Bittensor, Bittex redefines liquidity provision and currency exchange on the blockchain.
@@ -59,3 +61,4 @@ Miners' scores are calculated based on their activity in each swap, with additio
 - **Discord Server**: https://discord.gg/XdAa7BAN8H
 - **Smart Contract Deployment**: https://bscscan.com/address/0x4c8cc220d29c19baa2bd8c39ddc27e5d65c7234f/
 - **CertiK Security Profile**: https://skynet.certik.com/projects/bittex/
+- **X Post**: https://x.com/bittingthembits/status/1805627895450107948?t=YmlNKg8JMSQ-xiVSPd2pLQ&s=19

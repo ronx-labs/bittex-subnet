@@ -19,6 +19,8 @@ That's where the Bittex subnet comes in. It's a DEX protocol similar to Uniswap 
 At Bittex, we adopt an innovative approach to liquidity provision termed "atomic swaps."<br/>
 Unlike traditional DEXs where liquidity providers (LPs) deposit funds into a pool, Bittex requires miners to deposit funds for each swap transaction. This approach significantly reduces the risk of impermanent loss and enhances the efficiency of liquidity provided by our miners.
 
+All transactions through the subnet will be collected and utilized for training AI models.
+
 Bittex is dedicated to revolutionizing the DeFi landscape by striving to become the largest decentralized exchange (DEX) protocol globally. With a focus on offering unparalleled exchange rates and reducing liquidity risks, Bittex harnesses the power of the Bittensor network. This integration not only ensures a secure and efficient trading environment but also positions Bittex at the forefront of innovative market solutions in decentralized finance. Our mission is to reshape how liquidity and currency exchange are managed on the blockchain, setting a new standard for DEX platforms worldwide.
 
 ## Architecture

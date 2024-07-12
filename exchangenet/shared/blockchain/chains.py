@@ -10,7 +10,7 @@ chains = {
         rpc_url="https://bsc-dataseed.binance.org/",
         chain_id=56,
         chain_name="Binance Smart Chain",
-        bittex_contract_address="0x4c8cc220d29c19baa2bd8c39ddc27e5d65c7234f",
+        bittex_contract_address="0x4B4f0C76CD0E21DDE7888950D5cF09bAa5a69c20",
         bittex_abi=BITTEX_ABI,
         available_tokens=[
             Token(
@@ -31,13 +31,13 @@ chains = {
         rpc_url="https://data-seed-prebsc-1-s1.binance.org:8545/",
         chain_id=97,
         chain_name="Binance Smart Chain Testnet",
-        bittex_contract_address="0x2C9Ce1543A4eb3bE45636103F1BFaaE31B0E906b",
+        bittex_contract_address="0xe5f8E240ae436aEfBDE90CFCE698AbA970222156",
         bittex_abi=BITTEX_ABI,
         available_tokens=[
             Token(
                 symbol="USDT",
                 name="Tether USD",
-                address="0x337610d27c682e347c9cd60bd4b3b107c9d34ddd",
+                address="0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
                 decimals=18
             ),
             Token(

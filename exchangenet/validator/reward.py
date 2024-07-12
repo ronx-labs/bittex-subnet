@@ -84,7 +84,7 @@ def get_total_reward_factor(self, uids: List[int], uid: int) -> float:
     amount_rank = sorted(total_transaction_counts).index(total_transaction_count)
 
     # Calculate the total reward factor based on the rank
-    total_reward_factor = self.total_reward_weight * (count_rank + amount_rank) / uid_count
+    total_reward_factor = self.remote_config.total_reward_weight * (count_rank + amount_rank) / uid_count
     return total_reward_factor
 
 def get_weekly_reward_factor(self, uids: List[int], uid: int) -> float:
@@ -114,7 +114,7 @@ def get_weekly_reward_factor(self, uids: List[int], uid: int) -> float:
     amount_rank = sorted(weekly_transaction_counts).index(weekly_transaction_count)
 
     # Calculate the weekly reward factor based on the rank
-    weekly_reward_factor = self.weekly_reward_weight * (count_rank + amount_rank) / uid_count
+    weekly_reward_factor = self.remote_config.weekly_reward_weight * (count_rank + amount_rank) / uid_count
     return weekly_reward_factor
 
 def reward(self, swap_id: bytes, info: Tuple[int, str, str], uids: List[int]) -> float:
@@ -132,9 +132,10 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str], uids: List[int]) ->
     if not is_verified:
         return 0.0
 
-    # Get the bid amount and winner of the swap
+    # Get the base reward, winner, and top bidders of the swap
     base_reward = chain.get_bid_amount(swap_id, account_address)
     winner = chain.get_winner(swap_id)
+    top_bidders = chain.get_swap(swap_id).top_bidders
     
     bt.logging.info(f"Winner: {winner}")
     hotkey = self.loop.run_until_complete(self.storage.retrieve_hotkey(winner))
@@ -144,9 +145,17 @@ def reward(self, swap_id: bytes, info: Tuple[int, str, str], uids: List[int]) ->
     weekly_reward_factor = get_weekly_reward_factor(self, uids, uid)
 
     # Calculate the reward based on the total and weekly reward factors
-    reward = base_reward * (1 + total_reward_factor + weekly_reward_factor)    
+    reward = base_reward * (1 + total_reward_factor + weekly_reward_factor)
 
-    return reward * self.config.neuron.winner_reward_rate if account_address == winner else reward
+    # Calculate the reward based on the top bidders
+    if account_address in top_bidders:
+        reward *= self.remote_config.top_bidder_reward_rate
+
+    # Calculate the reward based on the winner
+    if account_address == winner:
+        reward *= self.remote_config.winner_reward_rate
+ 
+    return reward
 
 def get_rewards(
     self,
